@@ -1,7 +1,5 @@
-import sys
-from threading import Thread
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import QCoreApplication, QRect, QPoint, QPropertyAnimation, QThread, pyqtSignal, QWaitCondition
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 
 import requests
@@ -12,29 +10,27 @@ file_path = 'D:/example1.jpg'
 
 
 class Send(QThread):
-    emit = pyqtSignal(int)
+    error = pyqtSignal(int)
+    finished = pyqtSignal()
 
-    def __init__(self):
-        QThread.__init__(self)
-        self.cond = QWaitCondition()
-        self._status = False
-
+    def __init__(self, parent = None):
+        super().__init__()
+        self.main = parent
+        self.isRun = False
     def run(self):
-        try:
-            data = [('mushroomId', 17)]
-            response = requests.post(url, data=data, timeout=10)
+        while self.isRun:
+            try:
+                data = [('mushroomId', 17)]
+                response = requests.post(url, data=data, timeout=10)
 
-            if response.text is not 201:
-                print(response.text)
-                raise Exception
-
-        except TimeoutError:
-            QMessageBox.about(self, 'Error', "서버 에러입니다 네트워크 연결을 다시 확인해 주세요")
-        except Exception:
-            QMessageBox.about(self, 'Error', "핀번호를 다시 확인해 주세요")
-        finally:
-            self.emit.emit(1)
-
+                if response.text is not 201:
+                    print(response.text)
+                    raise Exception
+                self.finished.emit()
+            except Exception:
+                self.error.emit(1)
+                break
+        print('haha')
 
 class RotateMe(QtWidgets.QLabel, QThread):
     def __init__(self, *args, **kwargs):
@@ -58,9 +54,9 @@ class RotateMe(QtWidgets.QLabel, QThread):
         if self.state is False:
             self._animation.start()
             self.state = True
-            th1 = Thread(target=self.send)
-            th1.start()
-
+    def stop_animations(self):
+        if self.state is True:
+            self._animation.stop()
             self.state = False
 
     def on_valueChanged(self, value):
@@ -68,46 +64,48 @@ class RotateMe(QtWidgets.QLabel, QThread):
         t.rotate(value)
         self.setPixmap(self._pixmap.transformed(t))
 
-    def send(self):
-        try:
-            data = [('mushroomId', 17)]
-            response = requests.post(url, data=data, timeout=10)
 
-            if response.text is not 201:
-                print(response.text)
-                raise Exception
-
-        except TimeoutError:
-            QMessageBox.about(self, 'Error', "서버 에러입니다 네트워크 연결을 다시 확인해 주세요")
-        except Exception:
-            QMessageBox.about(self, 'Error', "핀번호를 다시 확인해 주세요")
-        finally:
-            self.sendEvent.emit(1)
 
 
 class Widget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Widget, self).__init__(parent)
-        self.th = QThread(self)
-        self.send = Send()
-        self.send.moveToThread(self.th)
 
-        label = RotateMe(alignment=QtCore.Qt.AlignCenter)
-        label.set_pixmap(QtGui.QPixmap('./operating.png'))
-        button = QtWidgets.QPushButton('Rotate')
-        button.clicked.connect(label.start_animation)
+        self.label = RotateMe(alignment=QtCore.Qt.AlignCenter)
+        self.label.set_pixmap(QtGui.QPixmap('./operating.png'))
+        self.show()
+        self.send = Send(self)
+        self.send.finished.connect(self.stop)
+        self.send.error.connect(self.error)
+        button = QtWidgets.QPushButton('Submit')
+
+
+        button.clicked.connect(self.label.start_animation)
+        button.clicked.connect(self.start)
+
 
         lay = QtWidgets.QVBoxLayout(self)
-        lay.addWidget(label)
+        lay.addWidget(self.label)
         lay.addWidget(button)
 
+    def start(self):
+        if not self.send.isRun:
+            self.send.isRun = True
+            self.send.start()
 
-
+    def stop(self):
+        if self.send.isRun:
+            self.send.isRun = False
+            self.label.stop_animations()
+    def error(self):
+            self.send.isRun = False
+            self.label.stop_animations()
+            QMessageBox.information(self,'Error','Please check Network')
 
 if __name__ == '__main__':
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
     w = Widget()
-    w.show()
+    # w.show()
     sys.exit(app.exec_())
