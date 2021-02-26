@@ -1,12 +1,16 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
-
 import requests
+import socket
 
-url = "http://54.210.105.132/api/image/upload"
+
+
+url = "http://54.210.105.132/api/myfarm/register/ip"
 title = 'title'
-file_path = 'D:/example1.jpg'
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
+local_ip_address = s.getsockname()[0]
 
 
 class Send(QThread):
@@ -20,11 +24,11 @@ class Send(QThread):
     def run(self):
         while self.isRun:
             try:
-                data = [('mushroomId', 17)]
-                response = requests.post(url, data=data, timeout=10)
+                data = {'id': 17,'ip':local_ip_address}
+                response = requests.put(url, data=data, timeout=10)
 
-                if response.text is not 201:
-                    print(response.text)
+                if response.status_code is not 200:
+                    print(response.status_code)
                     raise Exception
                 self.finished.emit()
             except Exception:
