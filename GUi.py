@@ -4,8 +4,6 @@ from PyQt5.QtWidgets import QMessageBox
 import requests
 import socket
 
-
-
 url = "http://54.210.105.132/api/myfarm/register/ip"
 title = 'title'
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -17,24 +15,28 @@ class Send(QThread):
     error = pyqtSignal(int)
     finished = pyqtSignal()
 
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super().__init__()
         self.main = parent
         self.isRun = False
+
     def run(self):
-        while self.isRun:
-            try:
-                data = {'id': 17,'ip':local_ip_address}
+        try:
+            while self.isRun:
+                # change ip address
+                data = {'id': 14, 'ip': '123.1212.2231.1'}
                 response = requests.put(url, data=data, timeout=10)
 
-                if response.status_code is not 200:
-                    print(response.status_code)
+                print(response.status_code)
+
+                if response.status_code != 200:
                     raise Exception
                 self.finished.emit()
-            except Exception:
-                self.error.emit(1)
                 break
-        print('haha')
+        except Exception:
+            self.error.emit(100)
+            self.isRun = False
+
 
 class RotateMe(QtWidgets.QLabel, QThread):
     def __init__(self, *args, **kwargs):
@@ -58,6 +60,7 @@ class RotateMe(QtWidgets.QLabel, QThread):
         if self.state is False:
             self._animation.start()
             self.state = True
+
     def stop_animations(self):
         if self.state is True:
             self._animation.stop()
@@ -67,8 +70,6 @@ class RotateMe(QtWidgets.QLabel, QThread):
         t = QtGui.QTransform()
         t.rotate(value)
         self.setPixmap(self._pixmap.transformed(t))
-
-
 
 
 class Widget(QtWidgets.QWidget):
@@ -83,10 +84,8 @@ class Widget(QtWidgets.QWidget):
         self.send.error.connect(self.error)
         button = QtWidgets.QPushButton('Submit')
 
-
         button.clicked.connect(self.label.start_animation)
         button.clicked.connect(self.start)
-
 
         lay = QtWidgets.QVBoxLayout(self)
         lay.addWidget(self.label)
@@ -101,10 +100,12 @@ class Widget(QtWidgets.QWidget):
         if self.send.isRun:
             self.send.isRun = False
             self.label.stop_animations()
+
     def error(self):
-            self.send.isRun = False
-            self.label.stop_animations()
-            QMessageBox.information(self,'Error','Please check Network')
+        self.send.isRun = False
+        self.label.stop_animations()
+        QMessageBox.information(self, 'Error', 'Please check Network')
+
 
 if __name__ == '__main__':
     import sys
