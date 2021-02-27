@@ -10,65 +10,112 @@ import glob
 import xml.etree.ElementTree as ET
 
 from PIL import Image
-from object_detection.utils import dataset_util
+import base64
 from collections import namedtuple, OrderedDict
+
+from object_detection.dataset_tools import tf_record_creation_util
+from object_detection.utils import dataset_util
+from object_detection.utils import label_map_util
+
+flags = tf.app.flags
+# flags.DEFINE_string('data_dir', '', 'Root directory to raw pet dataset.')
+# flags.DEFINE_string('output_dir', '', 'Path to directory to output TFRecords.')
+# flags.DEFINE_string('label_map_path', 'data/pet_label_map.pbtxt',
+#                     'Path to label map proto')
+# flags.DEFINE_boolean('faces_only', True, 'If True, generates bounding boxes '
+#                      'for pet faces.  Otherwise generates bounding boxes (as '
+#                      'well as segmentations for full pet bodies).  Note that '
+#                      'in the latter case, the resulting files are much larger.')
+# flags.DEFINE_string('mask_type', 'png', 'How to represent instance '
+#                     'segmentation masks. Options are "png" or "numerical".')
+# flags.DEFINE_integer('num_shards', 10, 'Number of TFRecord shards')
+#
+FLAGS = flags.FLAGS
+
+
+class picture_info():
+
+    def __init__(self,name, minx, maxx, miny, maxy):
+        self.name = name
+        self.minx = minx
+        self.maxx = maxx
+        self.miny = miny
+        self.maxy = maxy
+
 
 # mushroom
 def class_text_to_int():
     return 1
 
-def create_tf_example(xml_path,img_path):
-    width = []
-    height = []
-    mushroom_name = []
-    mushroom_minx = []
-    mushroom_miny = []
-    mushroom_maxx = []
-    mushroom_maxy = []
 
-    dir_path = xml_path + '/*.xml'
+def create_tf_example(array,img_path):
+    height = None
+    width = None
+    name = None
+    encoded_image_data = []
 
-    for filename in glob.glob(dir_path):
+    xmin = []
+    xmax = []
+    ymin = []
+    ymax = []
+    class_text = []
+    classes = []
 
-        tree = ET.parse(filename)
-        tree = tree.getroot()
-        size = tree.find('size')
-        whole_width = int(size.find('width').text)
-        whole_height = int(size.find('height').text)
-        filename = filename.split('.', 1)
-        filename = filename[0].split('\\')[1]
-        full_path = os.path.join(img_path,filename+'.jpg')
-        with tf.gfile.GFile(full_path,'rb') as fid:
-            encoded_jpg = fid.read()
-        for line in tree.findall('object'):
-            line = line.find('bndbox')
-            min_width = int(line.find('xmin').text)
-            min_height = int(line.find('ymin').text)
-            max_width = int(line.find('xmax').text)
-            max_height = int(line.find('ymax').text)
+    name = array[0].name
+    img_path = os.path.join(img_path,array[0].name)
+    img = Image.open(img_path)
+    width,height = img.size()
+    encoded_image_data = base64.b64encode(img)
 
-            #
-            mushroom_name.append(filename)
-            mushroom_minx.append(min_width/whole_width)
-            mushroom_miny.append(min_height/whole_height)
-            mushroom_maxx.append(max_width/whole_width)
-            mushroom_maxy.append(max_height/whole_height)
-            width.append(whole_width)
-            height.append(whole_height)
-    tf_example = tf.train.Example(features = tf.train.Feature(feature={
+    for obj in array:
+        xmin.append(obj.minx)
+        xmax.append(obj.maxx)
+        ymin.append(obj.miny)
+        ymax.append(obj.maxy)
+        class_text.append('Mushroom')
+        classes.append(1)
+
+    tf_example = tf.train.Example(features=tf.train.Feature(feature={
         'image/height': dataset_util.int64_feature(height),
         'image/width': dataset_util.int64_feature(width),
-        'image/filename': dataset_util.bytes_feature(filename.encode('utf8')),
-        'image/source_id': dataset_util.bytes_feature(filename.encode('utf8')),
-        'image/encoded': dataset_util.bytes_feature(encoded_jpg),
+        'image/filename': dataset_util.bytes_feature(name.encode('utf8')),
+        'image/source_id': dataset_util.bytes_feature(name.encode('utf8')),
+        'image/encoded': dataset_util.bytes_feature(encoded_image_data),
         'image/format': dataset_util.bytes_feature('jpg'.encode('utf8')),
-        'image/object/bbox/xmin': dataset_util.float_list_feature(mushroom_minx),
-        'image/object/bbox/xmax': dataset_util.float_list_feature(mushroom_maxx),
-        'image/object/bbox/ymin': dataset_util.float_list_feature(mushroom_miny),
-        'image/object/bbox/ymax': dataset_util.float_list_feature(mushroom_maxy),
-        'image/object/class/text': dataset_util.bytes_list_feature(0),
-        'image/object/class/label': dataset_util.int64_list_feature('mushroom'),
+        'image/object/bbox/xmin': dataset_util.float_list_feature(xmin),
+        'image/object/bbox/xmax': dataset_util.float_list_feature(xmax),
+        'image/object/bbox/ymin': dataset_util.float_list_feature(ymin),
+        'image/object/bbox/ymax': dataset_util.float_list_feature(ymax),
+        'image/object/class/text': dataset_util.bytes_list_feature(class_text.encode('utf8')),
+        'image/object/class/label': dataset_util.int64_list_feature(classes),
     }))
 
     return tf_example
 
+
+# coco type csv to
+def tfrecord(csv_path, img_path):
+    writer = tf.python_io.TFRecordWriter('.Dataset/train.record')
+    data = pd.read_csv(csv_path)
+
+    stack_list = []
+    for index in data.index:
+        name = data.loc[index,'name']
+        minx = data.loc[index,'min_x']
+        maxx = data.loc[index,'max_x']
+        miny = data.loc[index,'min_y']
+        maxy = data.loc[index,'max_y']
+
+        row = picture_info(name,minx,maxx,miny,maxy)
+        if len(stack_list) is 0:
+            stack_list.append(row)
+        elif stack_list[0].name is row.name:
+            stack_list.append(row)
+        else:
+            tf_example = create_tf_example(stack_list,img_path)
+            writer.write(tf_example.SerializeToString())
+            stack_list.clear()
+            stack_list.append(row)
+    writer.close()
+
+tfrecord('csv_path','img_path')
