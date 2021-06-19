@@ -451,7 +451,7 @@ class Send(QThread):
 
                 # user_id
                 # response.json()['machine_userid']
-
+                pipeline.start()
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())
@@ -607,7 +607,7 @@ class Window3(QtWidgets.QWidget):
         self.start = Start(self)
 
         self.start_before.finished.connect(self.go)
-        self.start.finished.connect(self.renewal)
+        self.start_before.finished.connect(self.renewal)
         self.data1 = QtWidgets.QLabel(str(self.start.hum))
         self.data2 = QtWidgets.QLabel(str(self.start.temp))
 
