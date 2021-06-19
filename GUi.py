@@ -14,6 +14,7 @@ import socket
 import cv2
 import pyrealsense2 as rs
 import numpy as np
+
 url_register = "http://184.73.45.24/api/myfarm/register/ip"
 url_info = "http://184.73.45.24/api/myfarm/info"
 
@@ -205,7 +206,7 @@ class Start_before(QThread):
             print(f"hum_array : {hum_array}")
             print(f"total_data : {data}")
 
-            return True if data else False
+            # return True if data else False
         except Exception:
             self.errors.emit(100)
             self.isRun = False
@@ -297,7 +298,8 @@ class Start(QThread):
                     hum = code[18: 20]
                     temp = code[38: 40]
                     socket_data(temp, hum)
-
+                    self.temp = temp
+                    self.hum = hum
                 if seconds - 2 <= hour and hour <= seconds + 2:
 
                     if len(data) - 1 < serial_send_len:
@@ -608,9 +610,11 @@ class Window3(QtWidgets.QWidget):
 
         self.start_before.finished.connect(self.go)
         self.start_before.finished.connect(self.renewal)
-        self.data1 = QtWidgets.QLabel(str(self.start.hum))
-        self.data2 = QtWidgets.QLabel(str(self.start.temp))
 
+        self.data1 = QtWidgets.QLabel()
+        self.setText(str(self.start.hum))
+        self.data2 = QtWidgets.QLabel(str(self.start.temp))
+        self.setText(str(self.start.temp))
         self.layout.addWidget(self.data1)
         self.layout.addWidget(self.data2)
         self.before_run()
@@ -625,10 +629,10 @@ class Window3(QtWidgets.QWidget):
             self.start.start()
 
     def renewal(self):
-        self.data1 = QtWidgets.QLabel(str(self.start.hum))
-        self.data2 = QtWidgets.QLabel(str(self.start.temp))
-        self.layout.addWidget(self.data1)
-        self.layout.addWidget(self.data2)
+        self.data1.setText(str(self.start.hum))
+        self.data2.setText(str(self.start.temp))
+        self.data1.repaint()
+        self.data2.repaint()
 
 
 class MainWindow(QtWidgets.QWidget):
