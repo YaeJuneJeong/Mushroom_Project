@@ -32,37 +32,37 @@ user_id = 0
 ret = 0
 
 # socket 서버 연결
-# sio = socketio.Client()
-# sio.connect('http://localhost:3001')
-#
-#
-# @sio.on("req_cosdata")
-# def socket_data(temp, hum):
-#     sio.emit("res_cosdata", {"temperature": temp, "humidity": hum})
-#
-#
-# @sio.on("req_video")
-# def socket_stream(req):
-#     if req:
-#         stream_end_value = True
-#     t = threading.Thread(target=stream_thread)
-#
-#
-# @sio.on("req_video")
-# def stream_thread(req):
-#     while True:
-#         frames = pipeline.wait_for_frames()
-#         color_frame = frames.get_color_frame()
-#
-#         # Convert images to numpy arrays
-#         color_image = np.asanyarray(color_frame.get_data())
-#
-#         result, frame = cv2.imencode('.jpg', color_image, encode_param)
-#         data = base64.b64encode(frame)
-#
-#         sio.emit('req_image', data)
-#         if req:
-#             break
+sio = socketio.Client()
+sio.connect('http://localhost:3001')
+
+
+@sio.on("req_cosdata")
+def socket_data(temp, hum):
+    sio.emit("res_cosdata", {"temperature": temp, "humidity": hum})
+
+
+@sio.on("req_video")
+def socket_stream(req):
+    if req:
+        stream_end_value = True
+    t = threading.Thread(target=stream_thread)
+
+
+@sio.on("req_video")
+def stream_thread(req):
+    while True:
+        frames = pipeline.wait_for_frames()
+        color_frame = frames.get_color_frame()
+
+        # Convert images to numpy arrays
+        color_image = np.asanyarray(color_frame.get_data())
+
+        result, frame = cv2.imencode('.jpg', color_image, encode_param)
+        data = base64.b64encode(frame)
+
+        sio.emit('req_image', data)
+        if req:
+            break
 
 
 SERVER_URL = 'http://184.73.45.24/api'  # 서버 url
@@ -103,7 +103,7 @@ class Start_before(QThread):
 
     def run(self):
         try:
-            while self.isRun:
+            while True:
                 time.sleep(1)  # 429 에러 방지
                 params = {'pin': PIN}
                 response = requests.get(
@@ -114,29 +114,31 @@ class Start_before(QThread):
                 if response.status_code == 200:
                     id_value = response.text
                     break
+            while self.isRun:
+                params = {'id': id_value, 'type': 'custom'}
+                response = requests.get(SERVER_URL + '/farm/data', params=params)
+                result = json.loads(response.text)
+                water_num = result['water']
+                temp_array = result['temperature']
+                hum_array = result['humidity']
 
-            params = {'id': id_value, 'type': 'custom'}
-            response = requests.get(SERVER_URL + '/farm/data', params=params)
-            result = json.loads(response.text)
-            water_num = result['water']
-            temp_array = result['temperature']
-            hum_array = result['humidity']
+                data_len = len(temp_array)
 
-            data_len = len(temp_array)
+                data = [None] * data_len
 
-            data = [None] * data_len
+                for i in range(0, data_len):
+                    temp_array[i] = str(temp_array[i]['setting_value'])
+                    hum_array[i] = str(hum_array[i]['setting_value'])
+                    data[i] = R + C + temp_array[i] + S + hum_array[i]
 
-            for i in range(0, data_len):
-                temp_array[i] = str(temp_array[i]['setting_value'])
-                hum_array[i] = str(hum_array[i]['setting_value'])
-                data[i] = R + C + temp_array[i] + S + hum_array[i]
+                print(f"물 횟수 : {water_num}")
+                print(f"온도 : {temp_array}")
+                print(f"습도 : {hum_array}")
+                print(f"데이터 : {data}")
 
-            print(f"물 횟수 : {water_num}")
-            print(f"온도 : {temp_array}")
-            print(f"습도 : {hum_array}")
-            print(f"데이터 : {data}")
-            self.isRun = False
-            self.finished.emit(100)
+                self.finished.emit(100)
+                self.isRun = False
+                break
         except Exception:
             self.errors.emit(100)
             self.isRun = False
@@ -180,21 +182,22 @@ class Start(QThread):
 
             now = datetime.datetime.now()
             Arduino = serial.Serial(port='COM7', baudrate=9600)
-            self.isRun = True
+            self.isRun = False
             while self.isRun:
                 dt1 = datetime.datetime.now()
                 result = dt1 - now
                 seconds = int(result.total_seconds())
-
+                print(1)
                 if Arduino.readable():
                     LINE = Arduino.readline()
                     code = str(LINE.decode().replace('\n', ''))
                     print(code)
                     hum = code[10: 12]
                     temp = code[30: 32]
-                    # socket_data(hum, temp)
+                    socket_data(hum, temp)
                     self.hum = hum
                     self.temp = temp
+
                 if seconds == hour:
                     Arduino.write(encode_serial_data(data[serial_send_len]))
 
@@ -428,16 +431,14 @@ class Window3(QtWidgets.QWidget):
     def before_run(self):
         if not self.start_before.isRun:
             self.start_before.isRun = True
-            self.start_before.run()
+            self.start_before.start()
 
     def run(self):
         if not self.start.isRun:
             self.start.start()
-            self.renewal()
     def renewal(self):
         self.data1 = QtWidgets.QLabel(str(self.start.hum))
         self.data2 = QtWidgets.QLabel(str(self.start.temp))
-
         self.layout.addWidget(self.data1)
         self.layout.addWidget(self.data2)
 
