@@ -91,6 +91,7 @@ file_path = 'D:/example1.jpg'
 # 시작전 polling 코드
 class Start_before(QThread):
     errors = pyqtSignal(int)
+    finished = pyqtSignal()
     global data
     global water_num
 
@@ -183,8 +184,8 @@ class Start(QThread):
 
             now = datetime.datetime.now()
             Arduino = serial.Serial(port='COM7', baudrate=9600)
-            self.isRun = True
-            
+            # self.isRun = True
+
             while self.isRun:
                 dt1 = datetime.datetime.now()
                 result = dt1 - now
@@ -266,13 +267,13 @@ class Send(QThread):
                 # user_id
                 # response.json()['machine_userid']
 
-
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())
                 cv2.imwrite('./recent.jpg', color_image)
                 self.isRun = False
                 self.finished.emit()
+                break
         except Exception:
             self.error.emit(100)
             self.isRun = False
@@ -325,7 +326,7 @@ class Window1(QtWidgets.QWidget):
         self.send = Send(self)
         self.send.finished.connect(self.stop)
         self.send.finished.connect(self.change_stack)
-        self.send.info.connect(self.get_info)
+        # self.send.info.connect(self.get_info)
         self.send.error.connect(self.error)
 
         button = QtWidgets.QPushButton('ip 저장')
@@ -368,18 +369,17 @@ class Window2(QtWidgets.QWidget):
         button = QtWidgets.QPushButton('배지 확인')
         button.clicked.connect(self.check)
         self.layout.addWidget(button)
+
     # def set(self, data):
-        # print(data)
-        # label = QtWidgets.QLabel(str(data['id']))
-        # self.layout.addWidget(label)
-        #
-        # label = QtWidgets.QLabel(str(data['machine_ip']))
-        # self.layout.addWidget(label)
-        #
-        # label = QtWidgets.QLabel(str(data['machine_name']))
-        # self.layout.addWidget(label)
-
-
+    # print(data)
+    # label = QtWidgets.QLabel(str(data['id']))
+    # self.layout.addWidget(label)
+    #
+    # label = QtWidgets.QLabel(str(data['machine_ip']))
+    # self.layout.addWidget(label)
+    #
+    # label = QtWidgets.QLabel(str(data['machine_name']))
+    # self.layout.addWidget(label)
 
     def check(self):
         frames = pipeline.wait_for_frames()
@@ -420,14 +420,15 @@ class Window3(QtWidgets.QWidget):
 
         self.start_before = Start_before(self)
         self.start = Start(self)
+
         self.start_before.finished.connect(self.go)
-        self.before_run()
         self.start.finished.connect(self.renewal)
         self.data1 = QtWidgets.QLabel(str(self.start.hum))
         self.data2 = QtWidgets.QLabel(str(self.start.temp))
 
         self.layout.addWidget(self.data1)
         self.layout.addWidget(self.data2)
+        self.before_run()
 
     def before_run(self):
         if not self.start_before.isRun:
@@ -437,11 +438,13 @@ class Window3(QtWidgets.QWidget):
     def go(self):
         if not self.start.isRun:
             self.start.start()
+
     def renewal(self):
         self.data1 = QtWidgets.QLabel(str(self.start.hum))
         self.data2 = QtWidgets.QLabel(str(self.start.temp))
         self.layout.addWidget(self.data1)
         self.layout.addWidget(self.data2)
+
 
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
