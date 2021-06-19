@@ -110,10 +110,11 @@ class Start_before(QThread):
                     SERVER_URL + '/farm/exist',
                     params=params
                 )
-
+                print(response.status_code)
                 if response.status_code == 200:
                     id_value = response.text
                     break
+
             while self.isRun:
                 params = {'id': id_value, 'type': 'custom'}
                 response = requests.get(SERVER_URL + '/farm/data', params=params)
