@@ -168,8 +168,8 @@ class Start(QThread):
         super().__init__()
         self.main = parent
         self.isRun = False
-        self.temp = 20
-        self.hum = 40
+        self.temp = None
+        self.hum = None
 
     def run(self):
         try:
@@ -183,7 +183,8 @@ class Start(QThread):
 
             now = datetime.datetime.now()
             Arduino = serial.Serial(port='COM7', baudrate=9600)
-            self.isRun = False
+            self.isRun = True
+            
             while self.isRun:
                 dt1 = datetime.datetime.now()
                 result = dt1 - now
@@ -272,7 +273,6 @@ class Send(QThread):
                 cv2.imwrite('./recent.jpg', color_image)
                 self.isRun = False
                 self.finished.emit()
-                break
         except Exception:
             self.error.emit(100)
             self.isRun = False
@@ -420,7 +420,7 @@ class Window3(QtWidgets.QWidget):
 
         self.start_before = Start_before(self)
         self.start = Start(self)
-        self.start_before.finished.connect(self.run)
+        self.start_before.finished.connect(self.go)
         self.before_run()
         self.start.finished.connect(self.renewal)
         self.data1 = QtWidgets.QLabel(str(self.start.hum))
@@ -434,7 +434,7 @@ class Window3(QtWidgets.QWidget):
             self.start_before.isRun = True
             self.start_before.start()
 
-    def run(self):
+    def go(self):
         if not self.start.isRun:
             self.start.start()
     def renewal(self):
