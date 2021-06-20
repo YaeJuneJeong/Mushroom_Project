@@ -577,7 +577,7 @@ class Window2(QtWidgets.QWidget):
     # self.layout.addWidget(label)
 
     def check(self):
-
+        profile = pipeline.start(config)
         frames = pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
         color_image = np.asarray(color_frame.get_data())
@@ -601,6 +601,7 @@ class Window2(QtWidgets.QWidget):
             response = requests.get(SERVER_URL + 'myfarm/status', params={'id': 2, 'status': 'true'})
             self.change_stack()
 
+        pipeline.stop()
     def change_stack(self):
         self.parent().stack.setCurrentIndex(2)
 
