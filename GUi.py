@@ -7,7 +7,7 @@ import time
 import serial
 import socketio
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox
 import requests
 import socket
@@ -34,29 +34,31 @@ sio.connect('http://localhost:3001')
 
 stream_end_value = False
 
+
 @sio.on("req_cosdata")
-def socket_data(temp = 0, hum = 0):
+def socket_data(temp=0, hum=0):
     sio.emit("res_cosdata", {"temperature": temp, "humidity": hum})
 
+
 @sio.on("req_video")
-def socket_stream(req) :
+def socket_stream(req):
     global stream_end_value
     print("web socket req_video connect")
-    if req == 'disconnect' :
+    if req == 'disconnect':
         print("web socket req_video disconnect")
         stream_end_value = True
         return
     t = threading.Thread(target=stream_thread)
-    t.start() ;
+    t.start();
 
-def stream_thread() :
 
+def stream_thread():
     global pipeline_check
     global pipeline
     global config
     global stream_end_value
 
-    if pipeline_check == False :
+    if pipeline_check == False:
         pipeline_check = True
         profile = pipeline.start(config)
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
@@ -80,7 +82,7 @@ def stream_thread() :
                 break
         pipeline_check = False
         return
-    else :
+    else:
         return
 
 
@@ -101,12 +103,12 @@ D2_TIME = 1000
 
 water_num = 0
 
-
 data = None  # 환경 데이터 전역
 title = 'title'
 file_path = 'D:/example1.jpg'
 
 prg_id = 0
+
 
 # 시작전 polling 코드
 class Start_before(QThread):
@@ -240,10 +242,13 @@ def take_3Dpicture(name, pipeline, decimate, pc):
     except Exception as e:
         print(e)
 
+
 # 기기 가동 코드
 class Start(QThread):
     error = pyqtSignal(int)
+    singal = pyqtSignal(str, str)
     finished = pyqtSignal()
+
     global water_num
     global data
     global D2_TIME
@@ -257,8 +262,6 @@ class Start(QThread):
         super().__init__()
         self.main = parent
         self.isRun = False
-        self.temp = None
-        self.hum = None
 
     def run(self):
         try:
@@ -298,8 +301,7 @@ class Start(QThread):
                     hum = code[18: 20]
                     temp = code[38: 40]
                     socket_data(temp, hum)
-                    self.temp = temp
-                    self.hum = hum
+                    self.singal.emit(str(temp),str(hum))
                 if seconds - 2 <= hour and hour <= seconds + 2:
 
                     if len(data) - 1 < serial_send_len:
@@ -390,7 +392,7 @@ class Start(QThread):
                     else:
                         moter_time += 50
 
-                if seconds - 2 <= picTime + 30 and picTime + 30 <= seconds + 2:
+                if seconds - 2 <= picTime + 30 <= seconds + 2:
 
                     if pipeline_check == False:
                         pipeline_check = True
@@ -431,7 +433,6 @@ class Send(QThread):
         super().__init__()
         self.main = parent
         self.isRun = False
-        global ret
 
     def run(self):
         try:
@@ -453,6 +454,7 @@ class Send(QThread):
 
                 # user_id
                 # response.json()['machine_userid']
+                pipeline_check = True
                 pipeline.start()
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
@@ -569,6 +571,7 @@ class Window2(QtWidgets.QWidget):
     # self.layout.addWidget(label)
 
     def check(self):
+
         frames = pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
         color_image = np.asarray(color_frame.get_data())
@@ -612,9 +615,9 @@ class Window3(QtWidgets.QWidget):
         self.start_before.finished.connect(self.renewal)
 
         self.data1 = QtWidgets.QLabel()
-        self.setText(str(self.start.hum))
+        self.data1.setText(str(self.start.hum))
         self.data2 = QtWidgets.QLabel(str(self.start.temp))
-        self.setText(str(self.start.temp))
+        self.data2.setText(str(self.start.temp))
         self.layout.addWidget(self.data1)
         self.layout.addWidget(self.data2)
         self.before_run()
@@ -628,11 +631,13 @@ class Window3(QtWidgets.QWidget):
         if not self.start.isRun:
             self.start.start()
 
-    def renewal(self):
-        self.data1.setText(str(self.start.hum))
-        self.data2.setText(str(self.start.temp))
-        self.data1.repaint()
-        self.data2.repaint()
+    @pyqtSlot(str,str)
+    def renewal(self,arg1,arg2):
+        self.data1.setText(arg1)
+        self.data2.setText(arg2)
+        # self.data1.repaint(arg)
+        # self.data2.repaint()
+        print(arg1,arg2)
 
 
 class MainWindow(QtWidgets.QWidget):
