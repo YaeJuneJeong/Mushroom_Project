@@ -620,7 +620,7 @@ class Window3(QtWidgets.QWidget):
         # self.start = Start(self)
 
         # self.start_before.finished.connect(self.go)
-        # self.start_before.finished.connect(self.renewal)
+        self.start_before.signal.connect(self.renewal)
 
         self.data1 = QtWidgets.QLabel()
         self.data2 = QtWidgets.QLabel()
