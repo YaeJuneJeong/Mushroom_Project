@@ -247,7 +247,7 @@ class Start_before(QThread):
                     hum = code[18: 20]
                     temp = code[38: 40]
                     socket_data(temp, hum)
-                    self.signal.emit(temp, hum)
+                    self.signal.emit(float(temp), float(hum))
                 if seconds - 2 <= hour <= seconds + 2:
 
                     if len(data) - 1 < serial_send_len:
@@ -641,10 +641,10 @@ class Window3(QtWidgets.QWidget):
         if not self.start.isRun:
             self.start.start()
 
-    @pyqtSlot(str,str)
+    @pyqtSlot(float,float)
     def renewal(self,arg1,arg2):
-        self.data1.setText(str(float(arg1)))
-        self.data2.setText(str(float(arg2)))
+        self.data1.setText(str(arg1))
+        self.data2.setText(str(arg2))
         # self.data1.repaint(arg)
         # self.data2.repaint()
         # self.layout.repaint()
