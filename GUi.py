@@ -168,7 +168,7 @@ class Start_before(QThread):
             # print("Exist !!")
             # break
 
-            while True:
+            while self.isRun:
                 params = {'pin': PIN}
                 response = requests.get(
                     SERVER_URL + '/farm/exist',
@@ -231,7 +231,7 @@ class Start_before(QThread):
             hum = 0
             temp = 0
 
-            while True:
+            while self.isRun:
                 dt1 = datetime.datetime.now()
                 result = dt1 - now
                 seconds = int(result.total_seconds()) - loadTime
@@ -246,7 +246,7 @@ class Start_before(QThread):
                     hum = code[18: 20]
                     temp = code[38: 40]
                     socket_data(temp, hum)
-                    self.singal.emit(str(temp), str(hum))
+                    # self.singal.emit(str(temp), str(hum))
                 if seconds - 2 <= hour <= seconds + 2:
 
                     if len(data) - 1 < serial_send_len:
@@ -398,36 +398,36 @@ def take_3Dpicture(name, pipeline, decimate, pc):
 
 
 # 기기 가동 코드
-class Start(QThread):
-    error = pyqtSignal(int)
-    singal = pyqtSignal(str, str)
-    finished = pyqtSignal()
-
-    global water_num
-    global data
-    global D2_TIME
-    global pipeline
-    global config
-    global pipeline_check
-    global prg_id
-    global DAY
-
-    def __init__(self, parent=None):
-        super().__init__()
-        self.main = parent
-        self.isRun = False
-
-    def run(self):
-        try:
-
-
-
-                # 끝내기 데이터 오면 break 후 리턴
-                self.finished.emit()
-        except Exception:
-            self.error.emit(100)
-            self.isRun = False
-
+# class Start(QThread):
+#     error = pyqtSignal(int)
+#     singal = pyqtSignal(str, str)
+#     finished = pyqtSignal()
+#
+#     global water_num
+#     global data
+#     global D2_TIME
+#     global pipeline
+#     global config
+#     global pipeline_check
+#     global prg_id
+#     global DAY
+#
+#     def __init__(self, parent=None):
+#         super().__init__()
+#         self.main = parent
+#         self.isRun = False
+#
+#     def run(self):
+#         try:
+#
+#
+#
+#                 # 끝내기 데이터 오면 break 후 리턴
+#                 self.finished.emit()
+#         except Exception:
+#             self.error.emit(100)
+#             self.isRun = False
+#
 
 class Send(QThread):
     error = pyqtSignal(int)
@@ -465,6 +465,7 @@ class Send(QThread):
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())
                 cv2.imwrite('./recent.jpg', color_image)
+                pipeline.close()
                 self.isRun = False
                 self.finished.emit()
                 break
@@ -614,15 +615,13 @@ class Window3(QtWidgets.QWidget):
         self.layout.addWidget(label)
 
         self.start_before = Start_before(self)
-        self.start = Start(self)
+        # self.start = Start(self)
 
         # self.start_before.finished.connect(self.go)
         #self.start_before.finished.connect(self.renewal)
 
         self.data1 = QtWidgets.QLabel()
-        # self.data1.setText(str(self.start.hum))
         self.data2 = QtWidgets.QLabel()
-        # self.data2.setText(str(self.start.temp))
         self.layout.addWidget(self.data1)
         self.layout.addWidget(self.data2)
 
