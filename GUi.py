@@ -113,6 +113,7 @@ prg_id = 0
 # 시작전 polling 코드
 class Start_before(QThread):
     errors = pyqtSignal(int)
+    signal = pyqtSignal(str,str)
     finished = pyqtSignal()
     global data
     global water_num
@@ -246,7 +247,7 @@ class Start_before(QThread):
                     hum = code[18: 20]
                     temp = code[38: 40]
                     socket_data(temp, hum)
-                    # self.singal.emit(str(temp), str(hum))
+                    self.signal.emit(str(temp), str(hum))
                 if seconds - 2 <= hour <= seconds + 2:
 
                     if len(data) - 1 < serial_send_len:
@@ -619,7 +620,7 @@ class Window3(QtWidgets.QWidget):
         # self.start = Start(self)
 
         # self.start_before.finished.connect(self.go)
-        #self.start_before.finished.connect(self.renewal)
+        # self.start_before.finished.connect(self.renewal)
 
         self.data1 = QtWidgets.QLabel()
         self.data2 = QtWidgets.QLabel()
@@ -646,7 +647,7 @@ class Window3(QtWidgets.QWidget):
         self.data2.setText(arg2)
         # self.data1.repaint(arg)
         # self.data2.repaint()
-        self.layout.repaint()
+        # self.layout.repaint()
         print(arg1,arg2)
 
 
