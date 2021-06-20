@@ -473,7 +473,7 @@ class Send(QThread):
             self.isRun = False
 
         finally:
-            pipeline.close()
+            pipeline.stop()
 # class RotateMe(QtWidgets.QLabel, QThread):
 #     def __init__(self, *args, **kwargs):
 #         super().__init__(*args, **kwargs)
