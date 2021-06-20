@@ -612,15 +612,19 @@ class Window3(QtWidgets.QWidget):
         self.start = Start(self)
 
         self.start_before.finished.connect(self.go)
-        self.start_before.finished.connect(self.renewal)
+        #self.start_before.finished.connect(self.renewal)
 
         self.data1 = QtWidgets.QLabel()
-        self.data1.setText(str(self.start.hum))
-        self.data2 = QtWidgets.QLabel(str(self.start.temp))
-        self.data2.setText(str(self.start.temp))
+        # self.data1.setText(str(self.start.hum))
+        self.data2 = QtWidgets.QLabel()
+        # self.data2.setText(str(self.start.temp))
         self.layout.addWidget(self.data1)
         self.layout.addWidget(self.data2)
-        self.before_run()
+
+        self.button1 = QtWidgets.QPushButton()
+        self.button1.connect(self.before_run)
+        self.layout.addWidget(self.button1)
+        # self.before_run()
 
     def before_run(self):
         if not self.start_before.isRun:
@@ -637,6 +641,7 @@ class Window3(QtWidgets.QWidget):
         self.data2.setText(arg2)
         # self.data1.repaint(arg)
         # self.data2.repaint()
+        self.layout.repaint()
         print(arg1,arg2)
 
 
