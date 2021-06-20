@@ -209,62 +209,7 @@ class Start_before(QThread):
             print(f"total_data : {data}")
 
             # return True if data else False
-        except Exception:
-            self.errors.emit(100)
-            self.isRun = False
 
-
-def refresh_data():
-    refresh_url = SERVER_URL + '/api/myfarm/data/hour'
-    data = {'id': 2, 'ip': local_ip_address}
-    response = requests.put(refresh_url, data=data, timeout=10)
-
-
-def encode_serial_data(str):
-    return str.encode('utf-8')
-
-
-def take_3Dpicture(name, pipeline, decimate, pc):
-    try:
-
-        frames = pipeline.wait_for_frames()
-        color_frame = frames.get_color_frame()
-        depth_frame = frames.get_depth_frame()
-        depth_frame = decimate.process(depth_frame)
-        color_image = np.asanyarray(color_frame.get_data())
-
-        mapped_frame, color_source = color_frame, color_image
-        points = pc.calculate(depth_frame)
-        pc.map_to(mapped_frame)
-
-        points.export_to_ply(name, mapped_frame)
-
-    except Exception as e:
-        print(e)
-
-
-# 기기 가동 코드
-class Start(QThread):
-    error = pyqtSignal(int)
-    singal = pyqtSignal(str, str)
-    finished = pyqtSignal()
-
-    global water_num
-    global data
-    global D2_TIME
-    global pipeline
-    global config
-    global pipeline_check
-    global prg_id
-    global DAY
-
-    def __init__(self, parent=None):
-        super().__init__()
-        self.main = parent
-        self.isRun = False
-
-    def run(self):
-        try:
             # HOUR * 24 / water_num
             WATER_TIME = HOUR * 24 / water_num
 
@@ -301,8 +246,8 @@ class Start(QThread):
                     hum = code[18: 20]
                     temp = code[38: 40]
                     socket_data(temp, hum)
-                    self.singal.emit(str(temp),str(hum))
-                if seconds - 2 <= hour and hour <= seconds + 2:
+                    self.singal.emit(str(temp), str(hum))
+                if seconds - 2 <= hour <= seconds + 2:
 
                     if len(data) - 1 < serial_send_len:
                         response_status_prg = requests.put(SERVER_URL + f'/farm/end?id={prg_id}')
@@ -320,7 +265,7 @@ class Start(QThread):
                     serial_send_len += 1
                     hour += DAY
 
-                if seconds - 2 <= water_time and water_time <= seconds + 2:
+                if seconds - 2 <= water_time <= seconds + 2:
                     Arduino.write(WATER_ORDER.encode('utf-8'))
                     dt2 = datetime.datetime.now()
 
@@ -334,7 +279,7 @@ class Start(QThread):
 
                     water_time += WATER_TIME
 
-                if seconds - 2 <= moter_time - HOUR / 3 and moter_time - HOUR / 3 <= seconds + 2:
+                if seconds - 2 <= moter_time - HOUR / 3 <= seconds + 2:
 
                     if pipeline_check == False:
                         pipeline_check = True
@@ -416,6 +361,66 @@ class Start(QThread):
                         pipeline_check = False
                     else:
                         picTime += 50
+
+
+        except Exception:
+            self.errors.emit(100)
+            self.isRun = False
+
+
+def refresh_data():
+    refresh_url = SERVER_URL + '/api/myfarm/data/hour'
+    data = {'id': 2, 'ip': local_ip_address}
+    response = requests.put(refresh_url, data=data, timeout=10)
+
+
+def encode_serial_data(str):
+    return str.encode('utf-8')
+
+
+def take_3Dpicture(name, pipeline, decimate, pc):
+    try:
+
+        frames = pipeline.wait_for_frames()
+        color_frame = frames.get_color_frame()
+        depth_frame = frames.get_depth_frame()
+        depth_frame = decimate.process(depth_frame)
+        color_image = np.asanyarray(color_frame.get_data())
+
+        mapped_frame, color_source = color_frame, color_image
+        points = pc.calculate(depth_frame)
+        pc.map_to(mapped_frame)
+
+        points.export_to_ply(name, mapped_frame)
+
+    except Exception as e:
+        print(e)
+
+
+# 기기 가동 코드
+class Start(QThread):
+    error = pyqtSignal(int)
+    singal = pyqtSignal(str, str)
+    finished = pyqtSignal()
+
+    global water_num
+    global data
+    global D2_TIME
+    global pipeline
+    global config
+    global pipeline_check
+    global prg_id
+    global DAY
+
+    def __init__(self, parent=None):
+        super().__init__()
+        self.main = parent
+        self.isRun = False
+
+    def run(self):
+        try:
+
+
 
                 # 끝내기 데이터 오면 break 후 리턴
                 self.finished.emit()
@@ -611,7 +616,7 @@ class Window3(QtWidgets.QWidget):
         self.start_before = Start_before(self)
         self.start = Start(self)
 
-        self.start_before.finished.connect(self.go)
+        # self.start_before.finished.connect(self.go)
         #self.start_before.finished.connect(self.renewal)
 
         self.data1 = QtWidgets.QLabel()
