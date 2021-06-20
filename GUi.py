@@ -621,8 +621,8 @@ class Window3(QtWidgets.QWidget):
         self.layout.addWidget(self.data1)
         self.layout.addWidget(self.data2)
 
-        self.button1 = QtWidgets.QPushButton()
-        self.button1.connect(self.before_run)
+        self.button1 = QtWidgets.QPushButton('push')
+        self.button1.clicked.connect(self.before_run)
         self.layout.addWidget(self.button1)
         # self.before_run()
 
