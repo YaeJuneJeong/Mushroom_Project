@@ -460,12 +460,11 @@ class Send(QThread):
                 # user_id
                 # response.json()['machine_userid']
                 pipeline_check = True
-                pipeline.start()
+                profile = pipeline.start(config)
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())
                 cv2.imwrite('./recent.jpg', color_image)
-                pipeline.close()
                 self.isRun = False
                 self.finished.emit()
                 break
@@ -473,7 +472,8 @@ class Send(QThread):
             self.error.emit(100)
             self.isRun = False
 
-
+        finally:
+            pipeline.close()
 # class RotateMe(QtWidgets.QLabel, QThread):
 #     def __init__(self, *args, **kwargs):
 #         super().__init__(*args, **kwargs)
