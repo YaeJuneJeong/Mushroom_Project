@@ -835,7 +835,7 @@ class Window2(QtWidgets.QWidget):
         self.parent().stack.setCurrentIndex(2)
 
 
-class Window3(QtWidgets.QWidget, object):
+class Window3(QtWidgets.QtWidgets):
 
     def __init__(self):
         super(Window3, self).__init__()
@@ -1095,11 +1095,15 @@ class MainWindow(QtWidgets.QWidget):
         self.setWindowTitle("버섯 GUI")
         self.setWindowIcon(QtGui.QIcon('mushroom2.jpg'))
         self.stack = QtWidgets.QStackedLayout(self)
-        # self.stack1 = Window1(self)
-        # self.stack2 = Window2(self)
-        self.stack3 = Window3(self)
-        # self.stack.addWidget(self.stack1)
-        # self.stack.addWidget(self.stack2)
+        self.stack1 = Window1(self)
+
+        self.stack2 = Window2(self)
+
+        self.window3 = Window3(self)
+        Dialog = QtWidgets.QDialog()
+        self.window3.setupUi(Dialog)
+        self.stack.addWidget(self.stack1)
+        self.stack.addWidget(self.stack2)
         self.stack.addWidget(self.stack3)
         self.show()
 
