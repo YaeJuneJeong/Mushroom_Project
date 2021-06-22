@@ -1,9 +1,11 @@
 import base64
+import collections
 import datetime
 import json
+import random
 import threading
 import time
-
+import os
 import serial
 import socketio
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -14,9 +16,86 @@ import socket
 import cv2
 import pyrealsense2 as rs
 import numpy as np
+from PIL import Image
+import tensorflow as tf
+from object_detection.builders import model_builder
+from object_detection.utils import label_map_util, config_util
+from object_detection.utils import visualization_utils as viz_utils
+
+
+
+PATH_TO_MODEL_DIR = 'C:/Users/jyj98/tensorflow/workspace/training_demo/exported-models/mushroom_model1'
+PATH_TO_CFG = PATH_TO_MODEL_DIR + "/pipeline.config"
+PATH_TO_CKPT = PATH_TO_MODEL_DIR + "/checkpoint"
+PATH_TO_LABELS = 'C:/Users/jyj98/tensorflow/workspace/training_demo/annotations/label_map.pbtxt'
+PATH_TO_SAVED_MODEL = PATH_TO_MODEL_DIR + "/saved_model"
 
 url_register = "http://184.73.45.24/api/myfarm/register/ip"
 url_info = "http://184.73.45.24/api/myfarm/info"
+
+
+# Load pipeline config and build a detection model
+configs = config_util.get_configs_from_pipeline_file(PATH_TO_CFG)
+model_config = configs['model']
+detection_model = model_builder.build(model_config=model_config, is_training=False)
+
+# Restore checkpoint
+ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
+ckpt.restore(os.path.join(PATH_TO_CKPT, 'ckpt-0')).expect_partial()
+
+
+@tf.function
+def detect_fn(image):
+    """Detect objects in image."""
+
+    image, shapes = detection_model.preprocess(image)
+    prediction_dict = detection_model.predict(image, shapes)
+    detections = detection_model.postprocess(prediction_dict, shapes)
+
+    return detections
+
+def detection(img):
+    detect_fn = tf.saved_model.load(PATH_TO_SAVED_MODEL)
+    input_tensor = tf.convert_to_tensor(img)
+    input_tensor = input_tensor[tf.newaxis, ...]
+    detections = detect_fn(input_tensor)
+    num_detections = int(detections.pop('num_detections'))
+    detections = {key: value[0, :num_detections].numpy() for key, value in detections.items()}
+    detections['num_detections'] = num_detections
+    detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+
+    return detections
+
+def get_shiitake_location(boxes, scores, min_score_thresh, max_boxes_to_draw=20):
+    box_to_color_map = collections.defaultdict(str)
+    if not max_boxes_to_draw:
+        max_boxes_to_draw = boxes.shape[0]
+    for i in range(boxes[0].shape[0]):
+        if max_boxes_to_draw == len(box_to_color_map):
+            break
+        if scores[i] > min_score_thresh:
+            box = tuple(boxes[i].tolist())
+            box_to_color_map[box] = 'size'
+
+    return box_to_color_map
+
+def get_size(boxes):
+    return  random.randrange(1,8)
+
+# input ymin,xmin,ymax,xmax
+def make_data(prgID,range,boxes,size):
+    location = {
+        'rotation':str(range),
+        'y':str(boxes[0]),
+        'x':str(boxes[1]),
+        'height':str(abs(boxes[2]-boxes[0])),
+        'width':str(abs(boxes[3]-boxes[1]))
+    }
+    location_json = json.dumps(location)
+    data = {'prgId':prgID,'metaJSON':location_json,'size':size}
+    response=requests.post(url_register,data=data)
+    return response.status_code
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
@@ -359,7 +438,24 @@ class Start_before(QThread):
                         print(f"Python res_image : {response_image.status_code}")
                         pipeline.stop()
                         picTime += D2_TIME
+
+
+                        # Turning moter
+                        
+                        #  MUSHROOM DETECTION , requeset
+                        frames = pipeline.wait_for_frames()
+                        color_frame = frames.get_color_frame()
+                        color_image = np.asanyarray(color_frame.get_data())
+                        detections = detection(color_image)
+                        boxes = get_shiitake_location(detections['detection_boxes'], detections['detection_classes'], 0.5)
+                        print(boxes)
                         pipeline_check = False
+                        pipeline.stop()
+
+                        for box in boxes:
+                            size = get_size(box)
+                            res=make_data(52,box,size)
+                            print(res)
                     else:
                         picTime += 50
 
@@ -465,16 +561,18 @@ class Send(QThread):
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())
+                pipeline.stop()
                 cv2.imwrite('./recent.jpg', color_image)
                 self.isRun = False
                 self.finished.emit()
+
+
                 break
         except Exception:
             self.error.emit(100)
             self.isRun = False
 
-        finally:
-            pipeline.stop()
+
 # class RotateMe(QtWidgets.QLabel, QThread):
 #     def __init__(self, *args, **kwargs):
 #         super().__init__(*args, **kwargs)
@@ -655,7 +753,7 @@ class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("버섯 GUI")
-        self.setWindowIcon(QtGui.QIcon('mushroom.jpg'))
+        self.setWindowIcon(QtGui.QIcon('mushroom2.jpg'))
         self.stack = QtWidgets.QStackedLayout(self)
         self.stack1 = Window1(self)
         self.stack2 = Window2(self)
