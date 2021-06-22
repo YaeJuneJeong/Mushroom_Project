@@ -33,9 +33,9 @@ class Ui_FirstWindow(object):
     def __init__(self):
         super(Ui_FirstWindow, self).__init__()
         self.isRun = False
-
         self.send = Send(self)
         self.movie = QtGui.QMovie('./giphy.gif')
+
     def openWindow(self):
         self.window = QtWidgets.QMainWindow()
         self.ui = Ui_SecondWindow()
@@ -57,7 +57,8 @@ class Ui_FirstWindow(object):
         self.temp.setAlignment(QtCore.Qt.AlignCenter)
         self.temp.setObjectName("temp")
         self.temp_2 = QtWidgets.QLabel(Dialog)
-        self.temp_2.setGeometry(QtCore.QRect(350, 160, 171, 71))
+        self.temp_2.setMovie(self.movie)
+        self.temp_2.setGeometry(QtCore.QRect(350, 160, 171, 160))
         font = QtGui.QFont()
         font.setPointSize(14)
         font.setBold(True)
@@ -70,7 +71,7 @@ class Ui_FirstWindow(object):
         self.pushButton.setGeometry(QtCore.QRect(300, 410, 281, 101))
         self.pushButton.setObjectName("pushButton")
 
-        self.temp_2.setMovie(self.movie)
+
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -81,7 +82,7 @@ class Ui_FirstWindow(object):
         self.temp.setText(_translate("Dialog", "기기 IP 저장"))
         self.temp_2.setText(_translate("Dialog", "-"))
         self.pushButton.setText(_translate("Dialog", "IP 저장"))
-
+        self.temp_2.setMovie(self.movie)
         self.movie.start()
         self.movie.stop()
 
@@ -89,6 +90,7 @@ class Ui_FirstWindow(object):
         self.send.finished.connect(self.openWindow)
         self.send.error.connect(self.error)
 
+        self.pushButton.clicked.connect(self.start)
     def start(self):
         if not self.send.isRun:
             self.send.isRun = True

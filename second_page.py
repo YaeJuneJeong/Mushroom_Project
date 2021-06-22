@@ -10,16 +10,16 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from last_page import Ui_LastWindow
+# from last_page import Ui_LastWindow
 
 
 class Ui_SecondWindow(object):
-    def openWindow(self):
-        self.window = QtWidgets.QMainWindow()
-        self.ui =Ui_LastWindow()
-        self.ui.setupUi(self.window)
-        self.window.show()
-        SecondWindow.destroy()
+    # def openWindow(self):
+    #     self.window = QtWidgets.QMainWindow()
+    #     self.ui = Ui_LastWindow()
+    #     self.ui.setupUi(self.window)
+    #     self.window.show()
+    #     SecondWindow.destroy()
 
     def setupUi(self, SecondWindow):
         SecondWindow.setObjectName("SecondWindow")
@@ -66,6 +66,7 @@ class Ui_SecondWindow(object):
 
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     SecondWindow = QtWidgets.QMainWindow()
     ui = Ui_SecondWindow()
