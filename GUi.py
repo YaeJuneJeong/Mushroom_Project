@@ -750,7 +750,7 @@ class Window2(QtWidgets.QWidget):
         self.layout.addWidget(self.label)
 
         self.button1 = QtWidgets.QPushButton('영상 시작')
-        self.button1.clicked.connect(self.start)
+        # self.button1.clicked.connect(self.start)
         self.layout.addWidget(self.button1)
 
         self.button2 = QtWidgets.QPushButton('배지 확인')
@@ -761,17 +761,6 @@ class Window2(QtWidgets.QWidget):
         self.take_picture = False
 
         self.color_frame = None
-
-    # def set(self, data):
-    # print(data)
-    # label = QtWidgets.QLabel(str(data['id']))
-    # self.layout.addWidget(label)
-    #
-    # label = QtWidgets.QLabel(str(data['machine_ip']))
-    # self.layout.addWidget(label)
-    #
-    # label = QtWidgets.QLabel(str(data['machine_name']))
-    # self.layout.addWidget(label)
 
     def play(self):
         try:
@@ -806,8 +795,9 @@ class Window2(QtWidgets.QWidget):
 
     def check(self):
         # profile = pipeline.start(config)
-
-        color_frame = self.color_frame
+        profile = pipeline.start(config)
+        frames = pipeline.wait_for_frames()
+        color_frame = frames.get_color_frame()
         color_image = np.asarray(color_frame.get_data())
 
         # take the only location of mushroom pot -> 1/3 * width,1/2*height
@@ -1100,9 +1090,10 @@ class MainWindow(QtWidgets.QWidget):
         self.stack = QtWidgets.QStackedLayout(self)
         self.stack1 = Window1(self)
         self.stack2 = Window2(self)
-        Dialog = QtWidgets.QDialog()
+        self.Dialog = QtWidgets.QDialog()
         self.stack3 = Window3(self)
-        self.stack3.setupUi(Dialog)
+        self.stack3.setupUi(self.Dialog)
+
         self.stack.addWidget(self.stack1)
         self.stack.addWidget(self.stack2)
         self.stack.addWidget(self.stack3)
