@@ -22,8 +22,6 @@ from object_detection.builders import model_builder
 from object_detection.utils import label_map_util, config_util
 from object_detection.utils import visualization_utils as viz_utils
 
-
-
 PATH_TO_MODEL_DIR = 'C:/Users/jyj98/tensorflow/workspace/training_demo/exported-models/mushroom_model1'
 PATH_TO_CFG = PATH_TO_MODEL_DIR + "/pipeline.config"
 PATH_TO_CKPT = PATH_TO_MODEL_DIR + "/checkpoint"
@@ -32,7 +30,6 @@ PATH_TO_SAVED_MODEL = PATH_TO_MODEL_DIR + "/saved_model"
 
 url_register = "http://184.73.45.24/api/myfarm/register/ip"
 url_info = "http://184.73.45.24/api/myfarm/info"
-
 
 # Load pipeline config and build a detection model
 configs = config_util.get_configs_from_pipeline_file(PATH_TO_CFG)
@@ -54,6 +51,7 @@ def detect_fn(image):
 
     return detections
 
+
 def detection(img):
     detect_fn = tf.saved_model.load(PATH_TO_SAVED_MODEL)
     input_tensor = tf.convert_to_tensor(img)
@@ -65,6 +63,7 @@ def detection(img):
     detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
 
     return detections
+
 
 def get_shiitake_location(boxes, scores, min_score_thresh, max_boxes_to_draw=20):
     box_to_color_map = collections.defaultdict(str)
@@ -79,21 +78,23 @@ def get_shiitake_location(boxes, scores, min_score_thresh, max_boxes_to_draw=20)
 
     return box_to_color_map
 
+
 def get_size(boxes):
-    return  random.randrange(1,8)
+    return random.randrange(1, 8)
+
 
 # input ymin,xmin,ymax,xmax
-def make_data(prgID,range,boxes,size):
+def make_data(prgID, range, boxes, size):
     location = {
-        'rotation':str(range),
-        'y':str(boxes[0]),
-        'x':str(boxes[1]),
-        'height':str(abs(boxes[2]-boxes[0])),
-        'width':str(abs(boxes[3]-boxes[1]))
+        'rotation': str(range),
+        'y': str(boxes[0]),
+        'x': str(boxes[1]),
+        'height': str(abs(boxes[2] - boxes[0])),
+        'width': str(abs(boxes[3] - boxes[1]))
     }
     location_json = json.dumps(location)
-    data = {'prgId':prgID,'metaJSON':location_json,'size':size}
-    response=requests.post(url_register,data=data)
+    data = {'prgId': prgID, 'metaJSON': location_json, 'size': size}
+    response = requests.post(url_register, data=data)
     return response.status_code
 
 
@@ -188,11 +189,53 @@ file_path = 'D:/example1.jpg'
 
 prg_id = 0
 
+RUNNING = False
+
+
+def drawline(img, pt1, pt2, color, thickness=3, style='dotted', gap=30):
+    dist = ((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2) ** .5
+    pts = []
+    for i in np.arange(0, dist, gap):
+        r = i / dist
+        x = int((pt1[0] * (1 - r) + pt2[0] * r) + .5)
+        y = int((pt1[1] * (1 - r) + pt2[1] * r) + .5)
+        p = (x, y)
+        pts.append(p)
+
+    if style == 'dotted':
+        for p in pts:
+            cv2.circle(img, p, thickness, color, -1)
+    else:
+        s = pts[0]
+        e = pts[0]
+        i = 0
+        for p in pts:
+            s = e
+            e = p
+            if i % 2 == 1:
+                cv2.line(img, s, e, color, thickness)
+            i += 1
+
+
+def drawpoly(img, pts, color, thickness=1, style='dotted', ):
+    s = pts[0]
+    e = pts[0]
+    pts.append(pts.pop(0))
+    for p in pts:
+        s = e
+        e = p
+        drawline(img, s, e, color, thickness, style)
+
+
+def drawrect(img, pt1, pt2, color, thickness=1, style='dotted'):
+    pts = [pt1, (pt2[0], pt1[1]), pt2, (pt1[0], pt2[1])]
+    drawpoly(img, pts, color, thickness, style)
+
 
 # 시작전 polling 코드
 class Start_before(QThread):
     errors = pyqtSignal(int)
-    signal = pyqtSignal(str,str)
+    signal = pyqtSignal(str, str)
     finished = pyqtSignal()
     global data
     global water_num
@@ -439,22 +482,22 @@ class Start_before(QThread):
                         pipeline.stop()
                         picTime += D2_TIME
 
-
                         # Turning moter
-                        
+
                         #  MUSHROOM DETECTION , requeset
                         frames = pipeline.wait_for_frames()
                         color_frame = frames.get_color_frame()
                         color_image = np.asanyarray(color_frame.get_data())
                         detections = detection(color_image)
-                        boxes = get_shiitake_location(detections['detection_boxes'], detections['detection_classes'], 0.5)
+                        boxes = get_shiitake_location(detections['detection_boxes'], detections['detection_classes'],
+                                                      0.5)
                         print(boxes)
                         pipeline_check = False
                         pipeline.stop()
 
                         for box in boxes:
                             size = get_size(box)
-                            res=make_data(52,box,size)
+                            res = make_data(52, box, size)
                             print(res)
                     else:
                         picTime += 50
@@ -561,16 +604,16 @@ class Send(QThread):
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())
-                pipeline.stop()
                 cv2.imwrite('./recent.jpg', color_image)
                 self.isRun = False
                 self.finished.emit()
-
-
                 break
         except Exception:
             self.error.emit(100)
             self.isRun = False
+
+        finally:
+            pipeline.stop()
 
 
 # class RotateMe(QtWidgets.QLabel, QThread):
@@ -611,6 +654,8 @@ class Window1(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Window1, self).__init__(parent)
 
+        self.setFixedHeight(600)
+        self.setFixedWidth(1024)
         self.secondWindow = Window2()
         self.label = QtWidgets.QLabel(alignment=QtCore.Qt.AlignCenter)
         self.movie = QtGui.QMovie('./giphy.gif')
@@ -660,9 +705,20 @@ class Window2(QtWidgets.QWidget):
         super(Window2, self).__init__(parent)
 
         self.layout = QtWidgets.QVBoxLayout(self)
-        button = QtWidgets.QPushButton('배지 확인')
-        button.clicked.connect(self.check)
-        self.layout.addWidget(button)
+        self.label = QtWidgets.QLabel()
+        self.label.resize(640, 480)
+        self.layout.addWidget(self.label)
+
+        self.button1 = QtWidgets.QPushButton('영상 시작')
+        self.button1.clicked.connect(self.play)
+        self.layout.addWidget(self.button1)
+
+        self.button2 = QtWidgets.QPushButton('배지 확인')
+        self.button2.clicked.connect(self.check)
+        self.layout.addWidget(self.button2)
+
+        self.win = QtWidgets.QWidget()
+        self.take_picture = False
 
     # def set(self, data):
     # print(data)
@@ -675,8 +731,37 @@ class Window2(QtWidgets.QWidget):
     # label = QtWidgets.QLabel(str(data['machine_name']))
     # self.layout.addWidget(label)
 
+    def play(self):
+        try:
+            while self.take_picture:
+                profile = pipeline.start(config)
+                frames = pipeline.wait_for_frames()
+                color_frame = frames.get_color_frame()
+                color_image = np.asarray(color_frame.get_data())
+                h, w, c = color_image.shape
+                drawrect(color_image, (234, 222), (400, 600), (0, 255, 255), 4, 'dotted')
+                qImg = QtGui.QImage(color_image.data, w, h, w * c, QtGui.QImage.Format_RGB888)
+                pixmap = QtGui.QPixmap.fromImage(qImg)
+                self.label.setPixmap(pixmap)
+
+        except Exception:
+            QMessageBox.information(self, 'Error', 'Cannot read frame')
+            print("cannot read frame.")
+        finally:
+            self.take_picture = False
+
+    def start(self):
+        self.take_picture = True
+        th = threading.Thread(target=self.play)
+        th.start()
+        print("started..")
+
+    def stop(self):
+        self.take_picture = False
+        print("stoped..")
+
     def check(self):
-        profile = pipeline.start(config)
+        # profile = pipeline.start(config)
         frames = pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
         color_image = np.asarray(color_frame.get_data())
@@ -685,7 +770,6 @@ class Window2(QtWidgets.QWidget):
         recent_image = color_image[240:, 214:428]
         check_image = cv2.imread('./recent.jpg')[240:, 214:428]
 
-        cv2.imwrite('./check.jpg', color_image)
         hist_recent = cv2.calcHist(recent_image, [1], None, [255], [0, 255])
         hist_check = cv2.calcHist(check_image, [1], None, [255], [0, 255])
         number = cv2.compareHist(hist_recent, hist_check, cv2.HISTCMP_CORREL)
@@ -698,9 +782,12 @@ class Window2(QtWidgets.QWidget):
             #
             print('Success')
             response = requests.get(SERVER_URL + 'myfarm/status', params={'id': 2, 'status': 'true'})
+            pipeline.stop()
+            self.stop()
             self.change_stack()
 
-        pipeline.stop()
+
+
     def change_stack(self):
         self.parent().stack.setCurrentIndex(2)
 
@@ -709,6 +796,9 @@ class Window3(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(Window3, self).__init__(parent)
+
+        self.setFixedHeight(600)
+        self.setFixedWidth(1024)
 
         self.layout = QtWidgets.QVBoxLayout(self)
         label = QtWidgets.QLabel('그래프 화면 입니다')
@@ -725,7 +815,7 @@ class Window3(QtWidgets.QWidget):
         self.layout.addWidget(self.data1)
         self.layout.addWidget(self.data2)
 
-        self.button1 = QtWidgets.QPushButton('push')
+        self.button1 = QtWidgets.QPushButton('기록 시작')
         self.button1.clicked.connect(self.before_run)
         self.layout.addWidget(self.button1)
         # self.before_run()
@@ -739,14 +829,14 @@ class Window3(QtWidgets.QWidget):
         if not self.start.isRun:
             self.start.start()
 
-    @pyqtSlot(str,str)
-    def renewal(self,arg1,arg2):
+    @pyqtSlot(str, str)
+    def renewal(self, arg1, arg2):
         self.data1.setText(arg1)
         self.data2.setText(arg2)
         # self.data1.repaint(arg)
         # self.data2.repaint()
         # self.layout.repaint()
-        print(arg1,arg2)
+        print(arg1, arg2)
 
 
 class MainWindow(QtWidgets.QWidget):
