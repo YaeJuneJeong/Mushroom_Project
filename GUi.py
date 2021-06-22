@@ -22,10 +22,10 @@ from object_detection.builders import model_builder
 from object_detection.utils import label_map_util, config_util
 from object_detection.utils import visualization_utils as viz_utils
 
-PATH_TO_MODEL_DIR = 'C:/Users/jyj98/tensorflow/workspace/training_demo/exported-models/mushroom_model1'
+PATH_TO_MODEL_DIR = 'C:/Users/LattePanda/tensorflow/workspace/training_demo/exported-models/mushroom_model1'
 PATH_TO_CFG = PATH_TO_MODEL_DIR + "/pipeline.config"
 PATH_TO_CKPT = PATH_TO_MODEL_DIR + "/checkpoint"
-PATH_TO_LABELS = 'C:/Users/jyj98/tensorflow/workspace/training_demo/annotations/label_map.pbtxt'
+PATH_TO_LABELS = 'C:/Users/LattePanda/tensorflow/workspace/training_demo/annotations/label_map.pbtxt'
 PATH_TO_SAVED_MODEL = PATH_TO_MODEL_DIR + "/saved_model"
 
 url_register = "http://184.73.45.24/api/myfarm/register/ip"
@@ -699,6 +699,9 @@ class Window1(QtWidgets.QWidget):
         self.parent().change(data)
 
 
+
+
+
 class Window2(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
@@ -706,6 +709,7 @@ class Window2(QtWidgets.QWidget):
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.label = QtWidgets.QLabel()
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.resize(320, 240)
         self.layout.addWidget(self.label)
 
@@ -720,6 +724,7 @@ class Window2(QtWidgets.QWidget):
         self.win = QtWidgets.QWidget()
         self.take_picture = False
 
+        self.color_frame = None
     # def set(self, data):
     # print(data)
     # label = QtWidgets.QLabel(str(data['id']))
@@ -736,12 +741,12 @@ class Window2(QtWidgets.QWidget):
             profile = pipeline.start(config)
             while self.take_picture:
                 frames = pipeline.wait_for_frames()
-                color_frame = frames.get_color_frame()
-                color_image = np.asarray(color_frame.get_data())
-                color_resize = cv2.resize(color_image, dsize=(400, 300), interpolation=cv2.INTER_AREA)
-                h, w, c = color_resize.shape
-                drawrect(color_resize, (234, 222), (400, 300), (0, 255, 255), 4, 'dotted')
-                qImg = QtGui.QImage(color_resize.data, w, h, w * c, QtGui.QImage.Format_RGB888)
+                self.color_frame = frames.get_color_frame()
+                color_image = np.asarray(self.color_frame.get_data())
+                # color_resize = cv2.resize(color_image, dsize=(400, 300), interpolation=cv2.INTER_AREA)
+                h, w, c = color_image.shape
+                drawrect(color_image, (234, 222), (400, 300), (0, 255, 255), 4, 'dotted')
+                qImg = QtGui.QImage(color_image.data, w, h, w * c, QtGui.QImage.Format_RGB888)
                 pixmap = QtGui.QPixmap.fromImage(qImg)
                 self.label.setPixmap(pixmap)
 
@@ -764,8 +769,8 @@ class Window2(QtWidgets.QWidget):
 
     def check(self):
         # profile = pipeline.start(config)
-        frames = pipeline.wait_for_frames()
-        color_frame = frames.get_color_frame()
+
+        color_frame = self.color_frame
         color_image = np.asarray(color_frame.get_data())
 
         # take the only location of mushroom pot -> 1/3 * width,1/2*height
