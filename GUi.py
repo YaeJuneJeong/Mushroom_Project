@@ -29,7 +29,6 @@ PATH_TO_LABELS = 'C:/Users/LattePanda/tensorflow/workspace/training_demo/annotat
 PATH_TO_SAVED_MODEL = PATH_TO_MODEL_DIR + "/saved_model"
 PATH_TO_IMG = 'C:/Users/jyj98/tensorflow/workspace/training_demo/images/train'
 
-
 url_register = "http://184.73.45.24/api/myfarm/register/ip"
 url_info = "http://184.73.45.24/api/myfarm/info"
 
@@ -54,6 +53,7 @@ def detect_fn(image):
 
     return detections
 
+
 def load_image_into_numpy_array(path):
     """Load an image from file into a numpy array.
 
@@ -68,6 +68,7 @@ def load_image_into_numpy_array(path):
       uint8 numpy array with shape (img_height, img_width, 3)
     """
     return np.array(Image.open(path))
+
 
 def detection(img):
     detect_fn = tf.saved_model.load(PATH_TO_SAVED_MODEL)
@@ -813,7 +814,7 @@ class Window2(QtWidgets.QWidget):
         self.parent().stack.setCurrentIndex(2)
 
 
-class Window3(QtWidgets.QWidget):
+class Window3(QtWidgets.QWidget, object):
 
     def __init__(self, parent=None):
         super(Window3, self).__init__(parent)
@@ -821,21 +822,11 @@ class Window3(QtWidgets.QWidget):
         self.current = 0
         self.collect = 0
 
-        self.setFixedHeight(600)
-        self.setFixedWidth(1024)
-
-        self.layout = QtWidgets.QVBoxLayout(self)
-
         self.start_before = Start_before(self)
         # self.start = Start(self)
 
         # self.start_before.finished.connect(self.go)
         self.start_before.signal.connect(self.renewal)
-
-        self.button1 = QtWidgets.QPushButton('기록 시작')
-        self.button1.clicked.connect(self.before_run)
-        self.layout.addWidget(self.button1)
-        # self.before_run()
 
     def setupUi(self, Dialog):
 
@@ -1009,13 +1000,15 @@ class Window3(QtWidgets.QWidget):
         self.hum.setText(_translate("Dialog", "-도"))
         self.label_21.setText(_translate("Dialog", "갱신 시간"))
 
+        self.pushButton_2.clicked.connect(self.right_click)
+        self.pushButton_3.clicked.connect(self.left_click)
         self.pushButton.clicked.connect(self.before_run)
         self.change_picture()
 
     def change_picture(self, current=0):
         file_name = self.currentPictures[self.current]
         self.file_name.setText(file_name)
-        current_img = load_image_into_numpy_array(os.path.join(PATH_TO_IMG,file_name))
+        current_img = load_image_into_numpy_array(os.path.join(PATH_TO_IMG, file_name))
         detections = detection(current_img)
         viz_utils.visualize_boxes_and_labels_on_image_array(current_img, detections['detection_boxes'],
                                                             detections['detection_classes'],
@@ -1041,11 +1034,14 @@ class Window3(QtWidgets.QWidget):
                 self.collect += 1
         self.gather_num.setText(str(self.collect))
 
-    def left_click(self):
-        self.current += 1
-        self.change_picture(self.current)
     def right_click(self):
-        self.current -=1
+        self.current = 0 if self.current + 1 > 3 else self.current + 1
+        self.change_picture(self.current)
+
+    def left_click(self):
+        self.current = 3 if self.current - 1 < 0 else self.current - 1
+        self.change_picture(self.current)
+
     def before_run(self):
         if not self.start_before.isRun:
             self.start_before.isRun = True
@@ -1089,8 +1085,8 @@ class MainWindow(QtWidgets.QWidget):
         self.stack.addWidget(self.stack3)
         self.show()
 
-    def change(self, data):
-        self.stack2.set(data)
+    # def change(self, data):
+    #     self.stack2.set(data)
 
 
 if __name__ == '__main__':
