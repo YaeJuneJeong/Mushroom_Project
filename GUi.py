@@ -733,15 +733,15 @@ class Window2(QtWidgets.QWidget):
 
     def play(self):
         try:
+            profile = pipeline.start(config)
             while self.take_picture:
-                profile = pipeline.start(config)
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())
-                color_image = cv2.resize(color_image, dsize=(320, 280), interpolation=cv2.INTER_AREA)
-                h, w, c = color_image.shape
-                drawrect(color_image, (234, 222), (400, 600), (0, 255, 255), 4, 'dotted')
-                qImg = QtGui.QImage(color_image.data, w, h, w * c, QtGui.QImage.Format_RGB888)
+                color_resize = cv2.resize(color_image, dsize=(400, 300), interpolation=cv2.INTER_AREA)
+                h, w, c = color_resize.shape
+                drawrect(color_resize, (234, 222), (400, 300), (0, 255, 255), 4, 'dotted')
+                qImg = QtGui.QImage(color_resize.data, w, h, w * c, QtGui.QImage.Format_RGB888)
                 pixmap = QtGui.QPixmap.fromImage(qImg)
                 self.label.setPixmap(pixmap)
 
@@ -750,6 +750,7 @@ class Window2(QtWidgets.QWidget):
             print("cannot read frame.")
         finally:
             self.take_picture = False
+            pipeline.close()
 
     def start(self):
         self.take_picture = True
