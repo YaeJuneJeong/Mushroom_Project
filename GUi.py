@@ -634,6 +634,28 @@ class Send(QThread):
             pipeline.stop()
 
 
+class play(QThread):
+    def __init__(self, parent=None):
+        super().__init__()
+        self.main = parent
+        self.isRun = False
+
+    def run(self):
+        try:
+            profile = pipeline.start(config)
+            while self.isRun:
+                frames = pipeline.wait_for_frames()
+                color_frame = frames.get_color_frame()
+                color_image = np.asarray(color_frame.get_data())
+
+        except Exception:
+            self.error.emit(100)
+            self.isRun = False
+
+        finally:
+            pipeline.stop()
+
+
 # class RotateMe(QtWidgets.QLabel, QThread):
 #     def __init__(self, *args, **kwargs):
 #         super().__init__(*args, **kwargs)
@@ -674,7 +696,7 @@ class Window1(QtWidgets.QWidget):
 
         self.setFixedHeight(600)
         self.setFixedWidth(1024)
-        self.secondWindow = Window2()
+        # self.secondWindow = Window2()
         self.label = QtWidgets.QLabel(alignment=QtCore.Qt.AlignCenter)
         self.movie = QtGui.QMovie('./giphy.gif')
         self.label.setMovie(self.movie)
@@ -771,7 +793,6 @@ class Window2(QtWidgets.QWidget):
             print("cannot read frame.")
         finally:
             self.take_picture = False
-            pipeline.close()
 
     def start(self):
         self.take_picture = True
@@ -816,17 +837,12 @@ class Window2(QtWidgets.QWidget):
 
 class Window3(QtWidgets.QWidget, object):
 
-    def __init__(self, parent=None):
-        super(Window3, self).__init__(parent)
+    def __init__(self):
+        super(Window3, self).__init__()
         self.currentPictures = ('de0.jpg', 'de90.jpg', 'de180.jpg', 'de270.jpg')
         self.current = 0
         self.collect = 0
-
         self.start_before = Start_before(self)
-        # self.start = Start(self)
-
-        # self.start_before.finished.connect(self.go)
-        self.start_before.signal.connect(self.renewal)
 
     def setupUi(self, Dialog):
 
@@ -978,6 +994,8 @@ class Window3(QtWidgets.QWidget, object):
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+        self.start_before.signal.connect(self.renewal)
 
         self.mushroom_picture.resize(320, 240)
 
