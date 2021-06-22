@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 
-from PicutreCapture.second_page import Ui_SecondWindow
+from second_page import Ui_SecondWindow
 import pyrealsense2 as rs
 
 url_register = "http://184.73.45.24/api/myfarm/register/ip"
@@ -35,7 +35,7 @@ class Ui_FirstWindow(object):
         self.isRun = False
 
         self.send = Send(self)
-
+        self.movie = QtGui.QMovie('./giphy.gif')
     def openWindow(self):
         self.window = QtWidgets.QMainWindow()
         self.ui = Ui_SecondWindow()
@@ -69,7 +69,7 @@ class Ui_FirstWindow(object):
         self.pushButton = QtWidgets.QPushButton(Dialog)
         self.pushButton.setGeometry(QtCore.QRect(300, 410, 281, 101))
         self.pushButton.setObjectName("pushButton")
-        self.movie = QtGui.QMovie('./giphy.gif')
+
         self.temp_2.setMovie(self.movie)
 
         self.retranslateUi(Dialog)
@@ -85,7 +85,7 @@ class Ui_FirstWindow(object):
         self.movie.start()
         self.movie.stop()
 
-        self.send.finishied.connect(self.stop)
+        self.send.finished.connect(self.stop)
         self.send.finished.connect(self.openWindow)
         self.send.error.connect(self.error)
 
@@ -118,6 +118,7 @@ class Send(QThread):
 
     def run(self):
         try:
+            profile = pipeline.start(config)
             while self.isRun:
                 # change ip address
                 data = {'id': 2, 'ip': local_ip_address}
@@ -127,7 +128,6 @@ class Send(QThread):
                 if response.status_code != 200:
                     raise Exception
 
-                profile = pipeline.start(config)
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())

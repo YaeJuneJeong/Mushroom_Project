@@ -21,12 +21,12 @@ from object_detection.utils import label_map_util, config_util
 import numpy as np
 from object_detection.utils import visualization_utils as viz_utils
 
-PATH_TO_MODEL_DIR = 'C:/Users/jyj98/tensorflow/workspace/training_demo/exported-models/mushroom_model1'
+PATH_TO_MODEL_DIR = 'C:/Users/LattePanda/tensorflow/workspace/training_demo/exported-models/mushroom_model1'
 PATH_TO_CFG = PATH_TO_MODEL_DIR + "/pipeline.config"
 PATH_TO_CKPT = PATH_TO_MODEL_DIR + "/checkpoint"
-PATH_TO_LABELS = 'C:/Users/jyj98/tensorflow/workspace/training_demo/annotations/label_map.pbtxt'
+PATH_TO_LABELS = 'C:/Users/LattePanda/tensorflow/workspace/training_demo/annotations/label_map.pbtxt'
 PATH_TO_SAVED_MODEL = PATH_TO_MODEL_DIR + "/saved_model"
-PATH_TO_IMG = 'C:/Users/jyj98/tensorflow/workspace/training_demo/images/train/Mushroom.jpg'
+PATH_TO_IMG = 'C:/Users/LattePanda/tensorflow/workspace/training_demo/images/train/Mushroom.jpg'
 
 # url_register = "http://184.73.45.24/api/myfarm/register/ip"
 # url_info = "http://184.73.45.24/api/myfarm/info"

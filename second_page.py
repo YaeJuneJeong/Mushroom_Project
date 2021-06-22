@@ -10,7 +10,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from PicutreCapture.last_page import Ui_LastWindow
+from last_page import Ui_LastWindow
 
 
 class Ui_SecondWindow(object):
