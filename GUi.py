@@ -706,11 +706,11 @@ class Window2(QtWidgets.QWidget):
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.label = QtWidgets.QLabel()
-        self.label.resize(640, 480)
+        self.label.resize(320, 240)
         self.layout.addWidget(self.label)
 
         self.button1 = QtWidgets.QPushButton('영상 시작')
-        self.button1.clicked.connect(self.play)
+        self.button1.clicked.connect(self.start)
         self.layout.addWidget(self.button1)
 
         self.button2 = QtWidgets.QPushButton('배지 확인')
@@ -738,6 +738,7 @@ class Window2(QtWidgets.QWidget):
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())
+                color_image = cv2.resize(color_image, dsize=(320, 280), interpolation=cv2.INTER_AREA)
                 h, w, c = color_image.shape
                 drawrect(color_image, (234, 222), (400, 600), (0, 255, 255), 4, 'dotted')
                 qImg = QtGui.QImage(color_image.data, w, h, w * c, QtGui.QImage.Format_RGB888)
