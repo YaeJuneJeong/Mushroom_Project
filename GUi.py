@@ -633,7 +633,6 @@ class Send(QThread):
         finally:
             pipeline.stop()
 
-
 class play(QThread):
     def __init__(self, parent=None):
         super().__init__()
@@ -644,6 +643,7 @@ class play(QThread):
         try:
             profile = pipeline.start(config)
             while self.isRun:
+
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 color_image = np.asarray(color_frame.get_data())
@@ -654,7 +654,6 @@ class play(QThread):
 
         finally:
             pipeline.stop()
-
 
 # class RotateMe(QtWidgets.QLabel, QThread):
 #     def __init__(self, *args, **kwargs):
@@ -794,6 +793,7 @@ class Window2(QtWidgets.QWidget):
         finally:
             self.take_picture = False
 
+
     def start(self):
         self.take_picture = True
         th = threading.Thread(target=self.play)
@@ -835,14 +835,19 @@ class Window2(QtWidgets.QWidget):
         self.parent().stack.setCurrentIndex(2)
 
 
-class Window3(QtWidgets.QtWidgets):
+class Window3(QtWidgets.QWidget, object):
 
-    def __init__(self):
+    def __init__(self, parent=None):
         super(Window3, self).__init__()
         self.currentPictures = ('de0.jpg', 'de90.jpg', 'de180.jpg', 'de270.jpg')
         self.current = 0
         self.collect = 0
+
         self.start_before = Start_before(self)
+        # self.start = Start(self)
+
+        # self.start_before.finished.connect(self.go)
+        self.start_before.signal.connect(self.renewal)
 
     def setupUi(self, Dialog):
 
@@ -995,8 +1000,6 @@ class Window3(QtWidgets.QtWidgets):
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
-        self.start_before.signal.connect(self.renewal)
-
         self.mushroom_picture.resize(320, 240)
 
     def retranslateUi(self, Dialog):
@@ -1096,12 +1099,10 @@ class MainWindow(QtWidgets.QWidget):
         self.setWindowIcon(QtGui.QIcon('mushroom2.jpg'))
         self.stack = QtWidgets.QStackedLayout(self)
         self.stack1 = Window1(self)
-
         self.stack2 = Window2(self)
-
-        self.window3 = Window3(self)
         Dialog = QtWidgets.QDialog()
-        self.window3.setupUi(Dialog)
+        self.stack3 = Window3(self)
+        self.stack3.setupUi(Dialog)
         self.stack.addWidget(self.stack1)
         self.stack.addWidget(self.stack2)
         self.stack.addWidget(self.stack3)
