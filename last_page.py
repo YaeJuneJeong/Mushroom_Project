@@ -100,9 +100,9 @@ def get_size(boxes):
     return random.randrange(1, 8)
 
 
-class Ui_Dialog(object):
+class Ui_LastWindow(object):
     def __init__(self):
-        super(Ui_Dialog, self).__init__()
+        super(Ui_LastWindow, self).__init__()
         self.currentPictures = ('de0.jpg', 'de90.jpg', 'de180.jpg', 'de270.jpg')
         self.current = 0
         self.collect = 0
@@ -329,7 +329,7 @@ if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
+    ui = Ui_LastWindow()
     ui.setupUi(Dialog)
     Dialog.show()
     sys.exit(app.exec_())
