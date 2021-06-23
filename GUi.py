@@ -716,7 +716,7 @@ class Window2(QtWidgets.QWidget):
                 color_image = np.asarray(self.color_frame.get_data())
                 # color_resize = cv2.resize(color_image, dsize=(400, 300), interpolation=cv2.INTER_AREA)
                 h, w, c = color_image.shape
-                drawrect(color_image, (234, 222), (400, 300), (0, 255, 255), 4, 'dotted')
+                drawrect(color_image, (234, 222), (600, 450), (0, 255, 255), 4, 'dotted')
                 qImg = QtGui.QImage(color_image.data, w, h, w * c, QtGui.QImage.Format_RGB888)
                 pixmap = QtGui.QPixmap.fromImage(qImg)
                 self.label.setPixmap(pixmap)
@@ -745,8 +745,8 @@ class Window2(QtWidgets.QWidget):
         color_image = np.asarray(color_frame.get_data())
 
         # take the only location of mushroom pot -> 1/3 * width,1/2*height
-        recent_image = color_image[240:, 214:428]
-        check_image = cv2.imread('./recent.jpg')[240:, 214:428]
+        recent_image = color_image[222:, 234:600]
+        check_image = cv2.imread('./recent.jpg')[222:, 234:600]
 
         hist_recent = cv2.calcHist(recent_image, [1], None, [255], [0, 255])
         hist_check = cv2.calcHist(check_image, [1], None, [255], [0, 255])
