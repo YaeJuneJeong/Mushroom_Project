@@ -555,38 +555,6 @@ def take_3Dpicture(name, pipeline, decimate, pc):
         print(e)
 
 
-# 기기 가동 코드
-# class Start(QThread):
-#     error = pyqtSignal(int)
-#     singal = pyqtSignal(str, str)
-#     finished = pyqtSignal()
-#
-#     global water_num
-#     global data
-#     global D2_TIME
-#     global pipeline
-#     global config
-#     global pipeline_check
-#     global prg_id
-#     global DAY
-#
-#     def __init__(self, parent=None):
-#         super().__init__()
-#         self.main = parent
-#         self.isRun = False
-#
-#     def run(self):
-#         try:
-#
-#
-#
-#                 # 끝내기 데이터 오면 break 후 리턴
-#                 self.finished.emit()
-#         except Exception:
-#             self.error.emit(100)
-#             self.isRun = False
-#
-
 class Send(QThread):
     error = pyqtSignal(int)
     info = pyqtSignal(dict)
@@ -654,40 +622,6 @@ class play(QThread):
 
         finally:
             pipeline.stop()
-
-# class RotateMe(QtWidgets.QLabel, QThread):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self._pixmap = QtGui.QPixmap()
-#         self.state = False
-#         self._animation = QtCore.QVariantAnimation(
-#             self,
-#             startValue=0.0,
-#             endValue=360.0,
-#             duration=1000,
-#             valueChanged=self.on_valueChanged
-#         )
-#         self._animation.setLoopCount(-1)
-#
-#     def set_pixmap(self, pixmap):
-#         self._pixmap = pixmap
-#         self.setPixmap(self._pixmap)
-#
-#     def start_animation(self):
-#         if self.state is False:
-#             self._animation.start()
-#             self.state = True
-#
-#     def stop_animations(self):
-#         if self.state is True:
-#             self._animation.stop()
-#             self.state = False
-#
-#     def on_valueChanged(self, value):
-#         t = QtGui.QTransform()
-#         t.rotate(value)
-#         self.setPixmap(self._pixmap.transformed(t))
-
 
 class Window1(QtWidgets.QWidget):
     def __init__(self, parent=None):
