@@ -750,7 +750,7 @@ class Window2(QtWidgets.QWidget):
         self.layout.addWidget(self.label)
 
         self.button1 = QtWidgets.QPushButton('영상 시작')
-        # self.button1.clicked.connect(self.start)
+        self.button1.clicked.connect(self.start)
         self.layout.addWidget(self.button1)
 
         self.button2 = QtWidgets.QPushButton('배지 확인')
@@ -761,6 +761,17 @@ class Window2(QtWidgets.QWidget):
         self.take_picture = False
 
         self.color_frame = None
+
+    # def set(self, data):
+    # print(data)
+    # label = QtWidgets.QLabel(str(data['id']))
+    # self.layout.addWidget(label)
+    #
+    # label = QtWidgets.QLabel(str(data['machine_ip']))
+    # self.layout.addWidget(label)
+    #
+    # label = QtWidgets.QLabel(str(data['machine_name']))
+    # self.layout.addWidget(label)
 
     def play(self):
         try:
@@ -795,9 +806,8 @@ class Window2(QtWidgets.QWidget):
 
     def check(self):
         # profile = pipeline.start(config)
-        profile = pipeline.start(config)
-        frames = pipeline.wait_for_frames()
-        color_frame = frames.get_color_frame()
+
+        color_frame = self.color_frame
         color_image = np.asarray(color_frame.get_data())
 
         # take the only location of mushroom pot -> 1/3 * width,1/2*height
@@ -818,8 +828,8 @@ class Window2(QtWidgets.QWidget):
             response = requests.get(SERVER_URL + 'myfarm/status', params={'id': 2, 'status': 'true'})
 
             self.stop()
+            pipeline.stop()
             self.change_stack()
-        pipeline.stop()
 
     def change_stack(self):
         self.parent().stack.setCurrentIndex(2)
@@ -828,7 +838,7 @@ class Window2(QtWidgets.QWidget):
 class Window3(QtWidgets.QWidget, object):
 
     def __init__(self, parent=None):
-        super(Window3, self).__init__()
+        super(Window3, self).__init__(parent)
         self.currentPictures = ('de0.jpg', 'de90.jpg', 'de180.jpg', 'de270.jpg')
         self.current = 0
         self.collect = 0
@@ -839,8 +849,8 @@ class Window3(QtWidgets.QWidget, object):
         # self.start_before.finished.connect(self.go)
         self.start_before.signal.connect(self.renewal)
 
-    # def setupUi(self, Dialog):
-        Dialog = QtWidgets.QDialog()
+    def setupUi(self, Dialog):
+
         Dialog.setObjectName("Dialog")
         Dialog.resize(1024, 600)
         Dialog.setMaximumSize(QtCore.QSize(1024, 600))
@@ -992,24 +1002,24 @@ class Window3(QtWidgets.QWidget, object):
 
         self.mushroom_picture.resize(320, 240)
 
-    # def retranslateUi(self, Dialog):
-    #     _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle("Dialog")
-        self.pushButton.setText("갱신하기")
-        self.total_num.setText("N 개")
-        self.gather_num.setText( "N 개")
-        self.label_12.setText("수확 대상")
-        self.label_13.setText("현재 버섯수")
-        self.pushButton_2.setText("→")
-        self.pushButton_3.setText("←")
-        self.file_name.setText("file_name")
-        self.label_15.setText("사진 이동")
-        self.label_16.setText("갱신 시간")
-        self.time.setText("-----")
-        self.temp.setText("-도")
-        self.label_19.setText("온도")
-        self.hum.setText("Dialog", "-도")
-        self.label_21.setText("Dialog", "갱신 시간")
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        self.pushButton.setText(_translate("Dialog", "갱신하기"))
+        self.total_num.setText(_translate("Dialog", "N 개"))
+        self.gather_num.setText(_translate("Dialog", "N 개"))
+        self.label_12.setText(_translate("Dialog", "수확 대상"))
+        self.label_13.setText(_translate("Dialog", "현재 버섯수"))
+        self.pushButton_2.setText(_translate("Dialog", "→"))
+        self.pushButton_3.setText(_translate("Dialog", "←"))
+        self.file_name.setText(_translate("Dialog", "file_name"))
+        self.label_15.setText(_translate("Dialog", "사진 이동"))
+        self.label_16.setText(_translate("Dialog", "갱신 시간"))
+        self.time.setText(_translate("Dialog", "-----"))
+        self.temp.setText(_translate("Dialog", "-도"))
+        self.label_19.setText(_translate("Dialog", "온도"))
+        self.hum.setText(_translate("Dialog", "-도"))
+        self.label_21.setText(_translate("Dialog", "갱신 시간"))
 
         self.pushButton_2.clicked.connect(self.right_click)
         self.pushButton_3.clicked.connect(self.left_click)
@@ -1091,7 +1101,6 @@ class MainWindow(QtWidgets.QWidget):
         self.stack1 = Window1(self)
         self.stack2 = Window2(self)
         self.stack3 = Window3(self)
-
         self.stack.addWidget(self.stack1)
         self.stack.addWidget(self.stack2)
         self.stack.addWidget(self.stack3)
