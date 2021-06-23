@@ -627,8 +627,8 @@ class Window1(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Window1, self).__init__(parent)
 
-        self.setFixedHeight(600)
-        self.setFixedWidth(1024)
+        self.setFixedHeight(580)
+        self.setFixedWidth(1000)
         # self.secondWindow = Window2()
         self.label = QtWidgets.QLabel(alignment=QtCore.Qt.AlignCenter)
         self.movie = QtGui.QMovie('./giphy.gif')
