@@ -18,89 +18,90 @@ import socketio
 import pyrealsense2 as rs
 import requests
 import serial
-import tensorflow as tf
+# import tensorflow as tf
 import cv2
 from PIL import Image
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal
-from object_detection.builders import model_builder
-from object_detection.utils import label_map_util, config_util
+from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal, QObject
+# from object_detection.builders import model_builder
+# from object_detection.utils import label_map_util, config_util
 import numpy as np
-from object_detection.utils import visualization_utils as viz_utils
+# from object_detection.utils import visualization_utils as viz_utils
 
-PATH_TO_MODEL_DIR = 'C:/Users/LattePanda/tensorflow/workspace/training_demo/exported-models/mushroom_model1'
+PATH_TO_MODEL_DIR = 'C:/Users/jyj98/tensorflow/workspace/training_demo/exported-models/mushroom_model1'
 PATH_TO_CFG = PATH_TO_MODEL_DIR + "/pipeline.config"
 PATH_TO_CKPT = PATH_TO_MODEL_DIR + "/checkpoint"
-PATH_TO_LABELS = 'C:/Users/LattePanda/tensorflow/workspace/training_demo/annotations/label_map.pbtxt'
+PATH_TO_LABELS = 'C:/Users/jyj98/tensorflow/workspace/training_demo/annotations/label_map.pbtxt'
 PATH_TO_SAVED_MODEL = PATH_TO_MODEL_DIR + "/saved_model"
-PATH_TO_IMG = 'C:/Users/LattePanda/tensorflow/workspace/training_demo/images/train/Mushroom.jpg'
+PATH_TO_IMG = 'C:/Users/jyj98/tensorflow/workspace/training_demo/images/train/Mushroom.jpg'
 
 # url_register = "http://184.73.45.24/api/myfarm/register/ip"
 # url_info = "http://184.73.45.24/api/myfarm/info"
 
 # Load pipeline config and build a detection model
-configs = config_util.get_configs_from_pipeline_file(PATH_TO_CFG)
-model_config = configs['model']
-detection_model = model_builder.build(model_config=model_config, is_training=False)
-
+# configs = config_util.get_configs_from_pipeline_file(PATH_TO_CFG)
+# model_config = configs['model']
+# detection_model = model_builder.build(model_config=model_config, is_training=False)
+#
 # Restore checkpoint
-ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
-ckpt.restore(os.path.join(PATH_TO_CKPT, 'ckpt-0')).expect_partial()
-category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
+# ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
+# ckpt.restore(os.path.join(PATH_TO_CKPT, 'ckpt-0')).expect_partial()
+# category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
 
-@tf.function
-def detect_fn(image):
-    """Detect objects in image."""
+# @tf.function
+# def detect_fn(image):
+#     """Detect objects in image."""
+#
+#     image, shapes = detection_model.preprocess(image)
+#     prediction_dict = detection_model.predict(image, shapes)
+#     detections = detection_model.postprocess(prediction_dict, shapes)
+#
+#     return detections
+#
+#
+# def detection(img):
+#     detect_fn = tf.saved_model.load(PATH_TO_SAVED_MODEL)
+#     input_tensor = tf.convert_to_tensor(img)
+#     input_tensor = input_tensor[tf.newaxis, ...]
+#     detections = detect_fn(input_tensor)
+#     num_detections = int(detections.pop('num_detections'))
+#     detections = {key: value[0, :num_detections].numpy() for key, value in detections.items()}
+#     detections['num_detections'] = num_detections
+#     detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+#
+#     return detections
+#
+#
+# def load_image_into_numpy_array(path):
+#     """Load an image from file into a numpy array.
+#
+#     Puts image into numpy array to feed into tensorflow graph.
+#     Note that by convention we put it into a numpy array with shape
+#     (height, width, channels), where channels=3 for RGB.
+#
+#     Args:
+#       path: the file path to the image
+#
+#     Returns:
+#       uint8 numpy array with shape (img_height, img_width, 3)
+#     """
+#     return np.array(Image.open(path))
+#
+#
+# def get_shiitake_location(boxes, scores, min_score_thresh, max_boxes_to_draw=20):
+#     box_to_color_map = collections.defaultdict(str)
+#     if not max_boxes_to_draw:
+#         max_boxes_to_draw = boxes.shape[0]
+#     for i in range(boxes[0].shape[0]):
+#         if max_boxes_to_draw == len(box_to_color_map):
+#             break
+#         if scores[i] > min_score_thresh:
+#             box = tuple(boxes[i].tolist())
+#             box_to_color_map[box] = 'size'
+#
+#     return box_to_color_map
 
-    image, shapes = detection_model.preprocess(image)
-    prediction_dict = detection_model.predict(image, shapes)
-    detections = detection_model.postprocess(prediction_dict, shapes)
-
-    return detections
-
-
-def detection(img):
-    detect_fn = tf.saved_model.load(PATH_TO_SAVED_MODEL)
-    input_tensor = tf.convert_to_tensor(img)
-    input_tensor = input_tensor[tf.newaxis, ...]
-    detections = detect_fn(input_tensor)
-    num_detections = int(detections.pop('num_detections'))
-    detections = {key: value[0, :num_detections].numpy() for key, value in detections.items()}
-    detections['num_detections'] = num_detections
-    detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
-
-    return detections
-
-
-def load_image_into_numpy_array(path):
-    """Load an image from file into a numpy array.
-
-    Puts image into numpy array to feed into tensorflow graph.
-    Note that by convention we put it into a numpy array with shape
-    (height, width, channels), where channels=3 for RGB.
-
-    Args:
-      path: the file path to the image
-
-    Returns:
-      uint8 numpy array with shape (img_height, img_width, 3)
-    """
-    return np.array(Image.open(path))
-
-
-def get_shiitake_location(boxes, scores, min_score_thresh, max_boxes_to_draw=20):
-    box_to_color_map = collections.defaultdict(str)
-    if not max_boxes_to_draw:
-        max_boxes_to_draw = boxes.shape[0]
-    for i in range(boxes[0].shape[0]):
-        if max_boxes_to_draw == len(box_to_color_map):
-            break
-        if scores[i] > min_score_thresh:
-            box = tuple(boxes[i].tolist())
-            box_to_color_map[box] = 'size'
-
-    return box_to_color_map
 
 pipeline_check = False
 pipeline = rs.pipeline()
@@ -108,17 +109,16 @@ config = rs.config()
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
-sio = socketio.Client()
-sio.connect('http://localhost:3001')
+# sio = socketio.Client()
+# sio.connect('http://localhost:3001')
 
 stream_end_value = False
-
 
 url_register = "http://184.73.45.24/api/myfarm/register/ip"
 url_info = "http://184.73.45.24/api/myfarm/info"
 SERVER_URL = 'http://184.73.45.24/api'  # 서버 url
 PIN = '107512'  # 기기 고유 핀번호
-
+#
 R = "R"  # 환경 데이터 프로토콜
 C = "C"  # 온도 프로토콜
 S = "S"  # 습도 프로토콜
@@ -133,30 +133,31 @@ D2_TIME = 1000
 
 water_num = 0
 
-data = None  # 환경 데이터 전역
-title = 'title'
-file_path = 'D:/example1.jpg'
 
-prg_id = 0
-
-RUNNING = False
-
-
-@sio.on("req_cosdata")
-def socket_data(temp=0, hum=0):
-    sio.emit("res_cosdata", {"temperature": temp, "humidity": hum})
-
-
-@sio.on("req_video")
-def socket_stream(req):
-    global stream_end_value
-    print("web socket req_video connect")
-    if req == 'disconnect':
-        print("web socket req_video disconnect")
-        stream_end_value = True
-        return
-    t = threading.Thread(target=stream_thread)
-    t.start();
+# data = None  # 환경 데이터 전역
+# title = 'title'
+# file_path = 'D:/example1.jpg'
+#
+# prg_id = 0
+#
+# RUNNING = False
+#
+#
+# @sio.on("req_cosdata")
+# def socket_data(temp=0, hum=0):
+#     sio.emit("res_cosdata", {"temperature": temp, "humidity": hum})
+#
+#
+# @sio.on("req_video")
+# def socket_stream(req):
+#     global stream_end_value
+#     print("web socket req_video connect")
+#     if req == 'disconnect':
+#         print("web socket req_video disconnect")
+#         stream_end_value = True
+#         return
+#     t = threading.Thread(target=stream_thread)
+#     t.start();
 
 def take_3Dpicture(name, pipeline, decimate, pc):
     try:
@@ -199,7 +200,7 @@ def stream_thread():
 
             result, frame = cv2.imencode('.jpg', color_image, encode_param)
             data = base64.b64encode(frame).decode('utf-8')
-            sio.emit('res_video', data)
+            # sio.emit('res_video', data)
             if stream_end_value:
                 pipeline.stop()
                 print("Web socket disconnet")
@@ -209,6 +210,8 @@ def stream_thread():
         return
     else:
         return
+
+
 def make_data(prgID, range, boxes, size):
     location = {
         'rotation': str(range),
@@ -358,7 +361,7 @@ class Start_before(QThread):
                     print(code)
                     hum = code[18: 20]
                     temp = code[38: 40]
-                    socket_data(temp, hum)
+                    # socket_data(temp, hum)
                     self.signal.emit(str(temp), str(hum))
                 if seconds - 2 <= hour <= seconds + 2:
 
@@ -478,17 +481,17 @@ class Start_before(QThread):
                         frames = pipeline.wait_for_frames()
                         color_frame = frames.get_color_frame()
                         color_image = np.asanyarray(color_frame.get_data())
-                        detections = detection(color_image)
-                        boxes = get_shiitake_location(detections['detection_boxes'], detections['detection_classes'],
-                                                      0.5)
-                        print(boxes)
+                        # detections = detection(color_image)
+                        # boxes = get_shiitake_location(detections['detection_boxes'], detections['detection_classes'],
+                        #                               0.5)
+                        # print(boxes)
                         pipeline_check = False
                         pipeline.stop()
 
-                        for box in boxes:
-                            size = get_size(box)
-                            res = make_data(52, box, size)
-                            print(res)
+                        # for box in boxes:
+                        #     size = get_size(box)
+                        #     res = make_data(52, box, size)
+                        #     print(res)
                     else:
                         picTime += 50
 
@@ -502,14 +505,13 @@ def get_size(boxes):
     return random.randrange(1, 8)
 
 
-class Ui_LastWindow(object):
+class Ui_LastWindow(QObject):
     def __init__(self):
         super(Ui_LastWindow, self).__init__()
         self.currentPictures = ('de0.jpg', 'de90.jpg', 'de180.jpg', 'de270.jpg')
         self.current = 0
         self.collect = 0
         self.start_before = Start_before(self)
-        self.start_before.signal.connect(self.renewal)
 
     def setupUi(self, Dialog):
 
@@ -519,6 +521,7 @@ class Ui_LastWindow(object):
         self.pushButton = QtWidgets.QPushButton(Dialog)
         self.pushButton.setGeometry(QtCore.QRect(860, 530, 111, 41))
         self.pushButton.setObjectName("pushButton")
+
         self.total_num = QtWidgets.QLabel(Dialog)
         self.total_num.setGeometry(QtCore.QRect(580, 400, 111, 71))
         font = QtGui.QFont()
@@ -551,11 +554,13 @@ class Ui_LastWindow(object):
         self.label_13.setTextFormat(QtCore.Qt.AutoText)
         self.label_13.setAlignment(QtCore.Qt.AlignCenter)
         self.label_13.setObjectName("label_13")
+
         self.mushroom_picture = QtWidgets.QLabel(Dialog)
         self.mushroom_picture.setGeometry(QtCore.QRect(620, 20, 291, 141))
         self.mushroom_picture.setTextFormat(QtCore.Qt.AutoText)
         self.mushroom_picture.setAlignment(QtCore.Qt.AlignCenter)
         self.mushroom_picture.setObjectName("mushroom_picture")
+
         self.pushButton_2 = QtWidgets.QPushButton(Dialog)
         self.pushButton_2.setGeometry(QtCore.QRect(660, 530, 81, 41))
         font = QtGui.QFont()
@@ -646,18 +651,7 @@ class Ui_LastWindow(object):
         self.label_21.setTextFormat(QtCore.Qt.AutoText)
         self.label_21.setAlignment(QtCore.Qt.AlignCenter)
         self.label_21.setObjectName("label_21")
-        self.verticalLayoutWidget = QtWidgets.QWidget(Dialog)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(-10, 0, 521, 641))
-        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.verticalLayoutWidget_2 = QtWidgets.QWidget(Dialog)
-        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(510, 0, 521, 641))
-        self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_2)
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
+
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -684,7 +678,10 @@ class Ui_LastWindow(object):
         self.label_21.setText(_translate("Dialog", "갱신 시간"))
         self.change_picture()
 
-        self.pushButton.clicked.connect()
+        self.start_before.signal.connect(self.renewal)
+        # self.pushButton.clicked.connect()
+        self.pushButton_3.clicked.connect(self.left_click)
+        self.pushButton_2.clicked.connect(self.right_click)
 
         self.pushButton.clicked.connect(self.before_run)
 
@@ -693,38 +690,46 @@ class Ui_LastWindow(object):
             self.start_before.isRun = True
             self.start_before.start()
 
-
     def change_picture(self, current=0):
         file_name = self.currentPictures[self.current]
+        print(file_name)
         self.file_name.setText(file_name)
-        current_img = load_image_into_numpy_array(PATH_TO_IMG)
-        detections = detection(current_img)
-        viz_utils.visualize_boxes_and_labels_on_image_array(current_img, detections['detection_boxes'],
-                                                            detections['detection_classes'],
-                                                            detections['detection_scores'], category_index,
-                                                            use_normalized_coordinates=True,
-                                                            max_boxes_to_draw=200,
-                                                            min_score_thresh=0.5,
-                                                            agnostic_mode=False)
-        current_img = cv2.resize(current_img, dsize=(280, 210), interpolation=cv2.INTER_AREA)
-        qImg = QtGui.QImage(current_img.data, 280, 210, QtGui.QImage.Format_RGB888)
-        pixmap = QtGui.QPixmap.fromImage(qImg)
+        # current_img = load_image_into_numpy_array(PATH_TO_IMG)
+        current_img = QtGui.QPixmap('./'+file_name)
+        # detections = detection(current_img)
+        # viz_utils.visualize_boxes_and_labels_on_image_array(current_img, detections['detection_boxes'],
+        #                                                     detections['detection_classes'],
+        #                                                     detections['detection_scores'], category_index,
+        #                                                     use_normalized_coordinates=True,
+        #                                                     max_boxes_to_draw=200,
+        #                                                     min_score_thresh=0.5,
+        #                                                     agnostic_mode=False)
+        # current_img = cv2.resize(current_img, dsize=(280, 210), interpolation=cv2.INTER_AREA)
+        # qImg = QtGui.QImage(current_img.data, 280, 210, QtGui.QImage.Format_RGB888)
+        # pixmap = QtGui.QPixmap.fromImage(qImg)
+        pixmap= current_img
         self.mushroom_picture.setPixmap(pixmap)
 
-        boxes = get_shiitake_location(detections['detection_boxes'], detections['detection_classes'],
-                                      0.5)
+        # boxes = get_shiitake_location(detections['detection_boxes'], detections['detection_classes'],
+        #                               0.5)
 
-        self.total_num.setText(str(len(boxes)-1))
-        self.collect = 0
-        for box in boxes:
-            size = get_size(box)
-            print(size)
-            if size > 6:
-                self.collect += 1
-        self.gather_num.setText(str(self.collect))
+        # self.total_num.setText(str(len(boxes) - 1))
+        # self.collect = 0
+        # for box in boxes:
+        #     size = get_size(box)
+        #     print(size)
+        #     if size > 6:
+        #         self.collect += 1
+        # self.gather_num.setText(str(self.collect))
 
     def left_click(self):
-        self.current += 1
+        self.current = self.current-1 if 0 < self.current <= 3 else 3
+        print(self.current)
+        self.change_picture(self.current)
+
+    def right_click(self):
+        self.current = self.current+1 if 0 <= self.current < 3 else 0
+        print(self.current)
         self.change_picture(self.current)
 
     @pyqtSlot(str, str)
@@ -744,6 +749,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
     ui = Ui_LastWindow()
+    Dialog.setStyleSheet("background-color: #dfe0d9;")
     ui.setupUi(Dialog)
     Dialog.show()
     sys.exit(app.exec_())
