@@ -109,7 +109,7 @@ class App(QWidget):
         self.display_height = 480
         # create the label that holds the image
         self.image_label = QLabel(self)
-        self.image_label.setFixedSize(640, 480)
+        self.image_label.setFixedSize(320, 240)
         #
 
         self.temp_2 = QLabel(self)
@@ -222,7 +222,7 @@ class App(QWidget):
         bytes_per_line = ch * w
         drawrect(rgb_image, (320, 122), (960, 700), (255, 124, 2), 4, 'dotted')
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
+        p = convert_to_Qt_format.scaled(self.display_width/2, self.display_height/2, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
 
 
