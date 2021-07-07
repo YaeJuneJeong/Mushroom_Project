@@ -34,39 +34,41 @@ class Ui_FirstWindow(object):
         super(Ui_FirstWindow, self).__init__()
         self.isRun = False
         self.send = Send(self)
-        self.movie = QtGui.QMovie('./giphy.gif')
-
+        self.movie = QtGui.QMovie('./1488.gif')
+        self.scale= 1
     def openWindow(self):
-        self.window = QtWidgets.QMainWindow()
-        self.ui = Ui_SecondWindow()
-        self.ui.setupUi(self.window)
-        self.window.show()
-        Dialog.destroy()
+        # self.window = QtWidgets.QMainWindow()
+        # self.ui = Ui_SecondWindow()
+        # self.ui.setupUi(self.window)
+        # self.window.show()
+        Dialog.close()
 
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(901, 531)
+        self.logo = QtWidgets.QLabel(Dialog)
+        self.logo.setGeometry(QtCore.QRect(150,5,171,171))
+
         self.temp = QtWidgets.QLabel(Dialog)
-        self.temp.setGeometry(QtCore.QRect(350, 40, 171, 71))
-        font = QtGui.QFont()
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setWeight(75)
-        self.temp.setFont(font)
+        self.temp.setGeometry(QtCore.QRect(200, 40, 171, 71))
         self.temp.setTextFormat(QtCore.Qt.AutoText)
         self.temp.setAlignment(QtCore.Qt.AlignCenter)
         self.temp.setObjectName("temp")
+
         self.temp_2 = QtWidgets.QLabel(Dialog)
+        self.temp_2.resize(200,200)
         self.temp_2.setMovie(self.movie)
-        self.temp_2.setGeometry(QtCore.QRect(350, 160, 171, 160))
-        font = QtGui.QFont()
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setWeight(75)
-        self.temp_2.setFont(font)
-        self.temp_2.setTextFormat(QtCore.Qt.AutoText)
+        self.temp_2.setGeometry(QtCore.QRect(350, 240, 171, 160))
         self.temp_2.setAlignment(QtCore.Qt.AlignCenter)
         self.temp_2.setObjectName("temp_2")
+
+        self.title = QtWidgets.QLabel(Dialog)
+        self.title.setText('WIFIを連結して機械のIPを入力してください')
+        self.title.setGeometry(QtCore.QRect(250, 170, 900, 41))
+        font = QtGui.QFont()
+        font.setPointSize(16)
+        font.setBold(True)
+        self.title.setFont(font)
         self.pushButton = QtWidgets.QPushButton(Dialog)
         self.pushButton.setGeometry(QtCore.QRect(300, 410, 281, 101))
         self.pushButton.setObjectName("pushButton")
@@ -76,12 +78,13 @@ class Ui_FirstWindow(object):
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
+
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.temp.setText(_translate("Dialog", "기기 IP 저장"))
+        # self.temp.setText(_translate("Dialog", "기기 IP 저장"))
         self.temp_2.setText(_translate("Dialog", "-"))
-        self.pushButton.setText(_translate("Dialog", "IP 저장"))
+        self.pushButton.setText(_translate("Dialog", 'IP 入力'))
         self.temp_2.setMovie(self.movie)
         self.movie.start()
         self.movie.stop()
@@ -91,21 +94,43 @@ class Ui_FirstWindow(object):
         self.send.error.connect(self.error)
 
         self.pushButton.clicked.connect(self.start)
+        font = QtGui.QFont('궁서')
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.pushButton.setStyleSheet("QPushButton{color: white;"
+	                                    "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, "
+                                      "stop:0 rgba(255, 190, 11, 255), stop:1 rgba(251, 86, 7, 255));"
+                                      "border-radius:20px}")
+        self.pushButton.setFont(font)
+        self.temp.resize(QtGui.QPixmap('./logo1.png').width(),QtGui.QPixmap('./logo1.png').height())
+        print(QtGui.QPixmap('./logo1.png').height())
+        self.temp.setPixmap(QtGui.QPixmap('./logo1.png'))
+        logo= QtGui.QPixmap('./logo.png')
+        self.scale /=9
+        logo = logo.scaled(logo.size()*self.scale)
+        self.logo.setPixmap(logo)
     def start(self):
         if not self.send.isRun:
             self.send.isRun = True
+            # self.pushButton.setStyleSheet("QPushButton{color: white;"
+            #                               "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, "
+            #                               "stop:0 rgba(255, 190, 11, 255), stop:1 rgba(251, 86, 7, 255));"
+            #                               "border-radius:20px}")
+            self.pushButton.setText('処理中')
             self.send.start()
             self.movie.start()
 
     def stop(self):
         if self.send.isRun:
             self.send.isRun = False
+            self.pushButton.setText('IP 入力')
             self.movie.stop()
 
     def error(self):
         self.send.isRun = False
         self.movie.stop()
-        QMessageBox.information(self, 'Error', 'Please check Network')
+        QMessageBox.information(Dialog, 'Error', 'Please check Network')
 
 
 class Send(QThread):
@@ -152,6 +177,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
     ui = Ui_FirstWindow()
+    Dialog.setStyleSheet("background-color: #dfe0d9;")
     ui.setupUi(Dialog)
     Dialog.show()
     sys.exit(app.exec_())
